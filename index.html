@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodie — منصة طلب الطعام</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #FFFAF6;
+      color: #1C1917;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* Floating food emojis background */
+    .floating-bg {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .floating-emoji {
+      position: absolute;
+      font-size: 40px;
+      opacity: 0.15;
+      animation: float 20s infinite linear;
+    }
+    @keyframes float {
+      0% { transform: translateY(100vh) rotate(0deg); }
+      100% { transform: translateY(-100px) rotate(360deg); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .logo {
+      font-size: 64px;
+      margin-bottom: 8px;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    h1 {
+      font-size: 48px;
+      font-weight: 900;
+      color: #F97316;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      font-size: 20px;
+      color: #78716C;
+      margin-bottom: 48px;
+      font-weight: 600;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    @media (max-width: 768px) {
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      h1 { font-size: 32px; }
+      .subtitle { font-size: 16px; margin-bottom: 32px; }
+    }
+
+    .role-card {
+      background: white;
+      border-radius: 24px;
+      padding: 32px 24px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      border: 2px solid transparent;
+    }
+    .role-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 40px rgba(249,115,22,0.15);
+      border-color: #F97316;
+    }
+
+    .role-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 16px;
+    }
+
+    .role-card:nth-child(1) .role-icon { background: linear-gradient(135deg, #FED7AA, #FDBA74); }
+    .role-card:nth-child(2) .role-icon { background: linear-gradient(135deg, #BBF7D0, #86EFAC); }
+    .role-card:nth-child(3) .role-icon { background: linear-gradient(135deg, #BFDBFE, #93C5FD); }
+
+    .role-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .role-desc {
+      font-size: 14px;
+      color: #78716C;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .role-features {
+      list-style: none;
+      text-align: right;
+      font-size: 13px;
+      color: #57534E;
+    }
+    .role-features li {
+      padding: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .role-features li::before {
+      content: "✓";
+      color: #16A34A;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .enter-btn {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 10px 24px;
+      border-radius: 12px;
+      font-family: 'Cairo', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .role-card:nth-child(1) .enter-btn {
+      background: #F97316; color: white;
+    }
+    .role-card:nth-child(1) .enter-btn:hover { background: #EA580C; }
+    .role-card:nth-child(2) .enter-btn {
+      background: #16A34A; color: white;
+    }
+    .role-card:nth-child(2) .enter-btn:hover { background: #15803D; }
+    .role-card:nth-child(3) .enter-btn {
+      background: #2563EB; color: white;
+    }
+    .role-card:nth-child(3) .enter-btn:hover { background: #1D4ED8; }
+
+    .footer {
+      color: #A8A29E;
+      font-size: 13px;
+    }
+    .footer span { color: #F97316; font-weight: 700; }
+
+    .badge {
+      display: inline-block;
+      background: #FEF3C7;
+      color: #92400E;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating food emojis background -->
+  <div class="floating-bg" id="floatingBg"></div>
+
+  <div class="container">
+    <div class="logo">🍔</div>
+    <h1>Foodie</h1>
+    <div class="subtitle">منصة طلب الطعام المتكاملة — اختر دورك وابدأ التجربة</div>
+    <div class="badge">🧪 نموذج أولي تجريبي — MVP Prototype</div>
+
+    <div class="cards-grid">
+      <!-- Customer -->
+      <a href="customer.html" class="role-card">
+        <div class="role-icon">🛒</div>
+        <div class="role-title">العميل</div>
+        <div class="role-desc">تصفح المطاعم، اطلب وجباتك المفضلة، وتابع حالة طلبك</div>
+        <ul class="role-features">
+          <li>تصفح المطاعم والمنيو</li>
+          <li>البحث والتصفية</li>
+          <li>سلة المشتريات والدفع</li>
+          <li>تتبع حالة الطلب</li>
+        </ul>
+        <button class="enter-btn">ادخل كعميل ←</button>
+      </a>
+
+      <!-- Restaurant -->
+      <a href="restaurant-admin.html" class="role-card">
+        <div class="role-icon">🍽️</div>
+        <div class="role-title">إدارة المطعم</div>
+        <div class="role-desc">أدر مطعمك، تابع الطلبات، وتحكم في المنيو</div>
+        <ul class="role-features">
+          <li>لوحة تحكم بالإحصائيات</li>
+          <li>إدارة الطلبات الواردة</li>
+          <li>إضافة وتعديل المنيو</li>
+          <li>إعدادات المطعم</li>
+        </ul>
+        <button class="enter-btn">ادخل كمطعم ←</button>
+      </a>
+
+      <!-- Super Admin -->
+      <a href="super-admin.html" class="role-card">
+        <div class="role-icon">🛡️</div>
+        <div class="role-title">السوبر أدمن</div>
+        <div class="role-desc">أدر المنصة بالكامل — المطاعم، المستخدمون، وطلبات الانضمام</div>
+        <ul class="role-features">
+          <li>إدارة كل المطاعم</li>
+          <li>إدارة المستخدمين</li>
+          <li>موافقة طلبات الانضمام</li>
+          <li>إحصائيات المنصة</li>
+        </ul>
+        <button class="enter-btn">ادخل كمدير ←</button>
+      </a>
+    </div>
+
+    <div class="footer">
+      صُنع بـ ❤️ لمشروع <span>Foodie</span> — نموذج MVP تجريبي بدون Backend
+    </div>
+  </div>
+
+  <script>
+    // Create floating food emojis
+    const emojis = ['🍔','🍕','🍣','🍰','🥗','🌮','🍗','🧆','🥙','🍟','🥤','🍩','🌯','🥘','🍱'];
+    const bg = document.getElementById('floatingBg');
+    
+    for (let i = 0; i < 20; i++) {
+      const span = document.createElement('span');
+      span.className = 'floating-emoji';
+      span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      span.style.left = Math.random() * 100 + '%';
+      span.style.animationDelay = Math.random() * 20 + 's';
+      span.style.animationDuration = (15 + Math.random() * 15) + 's';
+      span.style.fontSize = (25 + Math.random() * 30) + 'px';
+      bg.appendChild(span);
+    }
+  </script>
+</body>
+</html>

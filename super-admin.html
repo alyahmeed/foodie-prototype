@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodie 🍔 — لوحة الإدارة</title>
+  
+  <!-- خط Cairo من جوجل -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#F97316',
+            'primary-light': '#FFF7ED',
+            cream: '#FFFAF6',
+            dark: '#1C1917',
+            success: '#16A34A',
+            error: '#DC2626',
+          },
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+          },
+          borderRadius: {
+            '2xl': '20px',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    body { background: #FFFAF6; }
+    
+    /* شريط التمرير المخصص */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a3a3a3; }
+    
+    /* أنيميشن الظهور */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(-20px) translateX(-50%); }
+      to { opacity: 1; transform: translateY(0) translateX(-50%); }
+    }
+    @keyframes toastOut {
+      from { opacity: 1; transform: translateY(0) translateX(-50%); }
+      to { opacity: 0; transform: translateY(-20px) translateX(-50%); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+    .animate-slide-in { animation: slideIn 0.3s ease-out forwards; }
+    .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+    .animate-spin-slow { animation: spin 1s linear infinite; }
+    
+    /* تأخير الأنيميشن */
+    .delay-1 { animation-delay: 0.05s; opacity: 0; }
+    .delay-2 { animation-delay: 0.1s; opacity: 0; }
+    .delay-3 { animation-delay: 0.15s; opacity: 0; }
+    .delay-4 { animation-delay: 0.2s; opacity: 0; }
+    
+    /* التوست */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      animation: toastIn 0.3s ease-out forwards;
+      min-width: 300px;
+    }
+    .toast.hiding {
+      animation: toastOut 0.3s ease-out forwards;
+    }
+
+    /* مخطط الدونات */
+    .donut-chart {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      position: relative;
+    }
+    
+    /* تأثير الهوفر على الصفوف */
+    .table-row-hover:hover {
+      background-color: #FFF7ED;
+    }
+    
+    /* إخفاء السايدبار على الموبايل */
+    @media (max-width: 1023px) {
+      .sidebar {
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+    }
+    
+    /* الأوفرلاي */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 40;
+      transition: opacity 0.3s;
+    }
+    .overlay.active {
+      display: block;
+    }
+    
+    /* مودال */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+  </style>
+</head>
+
+<body class="font-cairo text-dark min-h-screen">
+
+  <!-- ========== حاوية التوست ========== -->
+  <div id="toast-container"></div>
+
+  <!-- ========== أوفرلاي الموبايل ========== -->
+  <div id="sidebar-overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- ========== السايدبار ========== -->
+  <aside id="sidebar" class="sidebar fixed top-0 right-0 h-full w-72 bg-white shadow-lg z-50 flex flex-col lg:translate-x-0">
+    <!-- الشعار -->
+    <div class="p-6 border-b border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-gradient-to-br from-primary to-amber-500 rounded-2xl flex items-center justify-center text-white text-xl">
+          🍔
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-dark">Foodie</h1>
+          <p class="text-xs text-gray-400 -mt-1">لوحة الإدارة</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- قائمة التنقل -->
+    <nav class="flex-1 p-4 space-y-1">
+      <button onclick="navigateTo('dashboard')" data-nav="dashboard"
+        class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span>لوحة التحكم</span>
+      </button>
+      
+      <button onclick="navigateTo('restaurants')" data-nav="restaurants"
+        class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+        <i data-lucide="store" class="w-5 h-5"></i>
+        <span>إدارة المطاعم</span>
+      </button>
+      
+      <button onclick="navigateTo('users')" data-nav="users"
+        class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200">
+        <i data-lucide="users" class="w-5 h-5"></i>
+        <span>إدارة المستخدمين</span>
+      </button>
+      
+      <button onclick="navigateTo('requests')" data-nav="requests"
+        class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 relative">
+        <i data-lucide="inbox" class="w-5 h-5"></i>
+        <span>طلبات الانضمام</span>
+        <span id="requests-badge" class="absolute left-4 top-1/2 -translate-y-1/2 bg-error text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">2</span>
+      </button>
+    </nav>
+    
+    <!-- معلومات المستخدم في الأسفل -->
+    <div class="p-4 border-t border-gray-100">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-amber-400 flex items-center justify-center text-white font-bold text-sm">م</div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold truncate">المدير العام</p>
+          <p class="text-xs text-gray-400 truncate">admin@foodie.com</p>
+        </div>
+        <button class="text-gray-400 hover:text-error transition-colors" title="تسجيل الخروج">
+          <i data-lucide="log-out" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== المحتوى الرئيسي ========== -->
+  <main id="main-content" class="lg:mr-72 min-h-screen transition-all duration-300">
+    
+    <!-- الشريط العلوي -->
+    <header class="sticky top-0 bg-white/80 backdrop-blur-lg border-b border-gray-100 z-30">
+      <div class="flex items-center justify-between px-4 lg:px-8 py-4">
+        <div class="flex items-center gap-3">
+          <!-- زر القائمة للموبايل -->
+          <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          <div>
+            <h2 id="page-title" class="text-lg lg:text-xl font-bold">لوحة التحكم</h2>
+            <p class="text-xs text-gray-400">مرحباً، المدير 👋</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <!-- زر الإشعارات -->
+          <button onclick="showToast('لا توجد إشعارات جديدة', 'info')" class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
+            <i data-lucide="bell" class="w-5 h-5 text-gray-500"></i>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========== صفحة لوحة التحكم ========== -->
+    <div id="page-dashboard" class="page p-4 lg:p-8 space-y-6">
+      
+      <!-- بطاقات الإحصائيات -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <!-- عدد المطاعم -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 animate-fade-in delay-1">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-400 mb-1">عدد المطاعم</p>
+              <p class="text-3xl font-bold text-dark">24</p>
+              <p class="text-xs text-success mt-1 flex items-center gap-1">
+                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                +3 هذا الشهر
+              </p>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
+              <i data-lucide="store" class="w-7 h-7 text-blue-500"></i>
+            </div>
+          </div>
+        </div>
+        
+        <!-- المستخدمون -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 animate-fade-in delay-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-400 mb-1">المستخدمون</p>
+              <p class="text-3xl font-bold text-dark">1,250</p>
+              <p class="text-xs text-success mt-1 flex items-center gap-1">
+                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                +48 هذا الأسبوع
+              </p>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center">
+              <i data-lucide="users" class="w-7 h-7 text-green-500"></i>
+            </div>
+          </div>
+        </div>
+        
+        <!-- طلبات اليوم -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 animate-fade-in delay-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-400 mb-1">طلبات اليوم</p>
+              <p class="text-3xl font-bold text-dark">156</p>
+              <p class="text-xs text-success mt-1 flex items-center gap-1">
+                <i data-lucide="trending-up" class="w-3 h-3"></i>
+                +12% عن أمس
+              </p>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center">
+              <i data-lucide="shopping-bag" class="w-7 h-7 text-primary"></i>
+            </div>
+          </div>
+        </div>
+        
+        <!-- طلبات انضمام معلقة -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 animate-fade-in delay-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-400 mb-1">طلبات انضمام معلقة</p>
+              <p class="text-3xl font-bold text-dark">3</p>
+              <p class="text-xs text-amber-500 mt-1 flex items-center gap-1">
+                <i data-lucide="clock" class="w-3 h-3"></i>
+                بانتظار المراجعة
+              </p>
+            </div>
+            <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center">
+              <i data-lucide="clock" class="w-7 h-7 text-amber-500"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- قسم الرسوم البيانية -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        
+        <!-- مخطط أعمدة - طلبات الأسبوع -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-gray-50 animate-fade-in">
+          <h3 class="text-base font-bold mb-6">📊 طلبات الأسبوع</h3>
+          <div class="flex items-end justify-between gap-2 h-48">
+            <div class="flex-1 flex flex-col items-center gap-2">
+              <div class="w-full bg-gradient-to-t from-primary to-amber-400 rounded-t-lg transition-all duration-500" style="height: 65%"></div>
+              <span class="text-xs text-gray-400">سبت</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-2">
+              <div class="w-full bg-gradient-to-t from-primary to-amber-400 rounded-t-lg transition-all duration-500" style="height: 80%"></div>
+              <span class="text-xs text-gray-400">أحد</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-2">
+              <div class="w-full bg-gradient-to-t from-primary to-amber-400 rounded-t-lg transition-all duration-500" style="height: 55%"></div>
+              <span class="text-xs text-gray-400">إثنين</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-2">
+              <div class="w-full bg-gradient-to-t from-primary to-amber-400 rounded-t-lg transition-all duration-500" style="height: 90%"></div>
+              <span class="text-xs text-gray-400">ثلاثاء</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-2">
+              <div class="w-full bg-gradient-to-t from-primary to-amber-400 rounded-t-lg transition-all duration-500" style="height: 70%"></div>
+              <span class="text-xs text-gray-400">أربعاء</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-2">
+              <div class="w-full bg-gradient-to-t from-primary to-amber-400 rounded-t-lg transition-all duration-500" style="height: 100%"></div>
+              <span class="text-xs text-gray-400">خميس</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-2">
+              <div class="w-full bg-gradient-to-t from-primary to-amber-400 rounded-t-lg transition-all duration-500" style="height: 85%"></div>
+              <span class="text-xs text-gray-400">جمعة</span>
+            </div>
+          </div>
+          <!-- قيم أعلى الأعمدة -->
+          <div class="flex justify-between mt-2 text-xs text-gray-500 font-semibold">
+            <span>98</span><span>120</span><span>82</span><span>135</span><span>105</span><span>156</span><span>128</span>
+          </div>
+        </div>
+        
+        <!-- مخطط دائري - توزيع المطاعم -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-50 animate-fade-in">
+          <h3 class="text-base font-bold mb-6">🍽️ توزيع المطاعم حسب النوع</h3>
+          <div class="flex justify-center mb-5">
+            <div class="relative w-44 h-44">
+              <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                <!-- وجبات سريعة 35% -->
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F97316" stroke-width="4"
+                  stroke-dasharray="35 65" stroke-dashoffset="0" class="transition-all duration-700"></circle>
+                <!-- مشاوي 25% -->
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#3B82F6" stroke-width="4"
+                  stroke-dasharray="25 75" stroke-dashoffset="-35" class="transition-all duration-700"></circle>
+                <!-- بيتزا 20% -->
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#16A34A" stroke-width="4"
+                  stroke-dasharray="20 80" stroke-dashoffset="-60" class="transition-all duration-700"></circle>
+                <!-- مأكولات بحرية 12% -->
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#EAB308" stroke-width="4"
+                  stroke-dasharray="12 88" stroke-dashoffset="-80" class="transition-all duration-700"></circle>
+                <!-- حلويات 8% -->
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#EC4899" stroke-width="4"
+                  stroke-dasharray="8 92" stroke-dashoffset="-92" class="transition-all duration-700"></circle>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="text-center">
+                  <span class="text-2xl font-bold">24</span>
+                  <span class="text-xs text-gray-400 block">مطعم</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-primary"></span><span>وجبات سريعة</span></div><span class="font-bold">35%</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span>مشاوي</span></div><span class="font-bold">25%</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-success"></span><span>بيتزا</span></div><span class="font-bold">20%</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span>مأكولات بحرية</span></div><span class="font-bold">12%</span></div>
+            <div class="flex items-center justify-between"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-pink-500"></span><span>حلويات</span></div><span class="font-bold">8%</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- النشاط الأخير -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-50 animate-fade-in">
+        <h3 class="text-base font-bold mb-4">🕐 النشاط الأخير</h3>
+        <div class="space-y-3">
+          <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-cream transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="user-plus" class="w-5 h-5 text-success"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold">تسجيل مستخدم جديد: <span class="text-primary">سارة أحمد</span></p>
+              <p class="text-xs text-gray-400">عميل جديد انضم للمنصة</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">منذ 5 دقائق</span>
+          </div>
+          
+          <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-cream transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="shopping-bag" class="w-5 h-5 text-primary"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold">طلب جديد #1247 من <span class="text-primary">مطعم الشام</span></p>
+              <p class="text-xs text-gray-400">قيمة الطلب: 85 ر.س</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">منذ 12 دقيقة</span>
+          </div>
+          
+          <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-cream transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="store" class="w-5 h-5 text-blue-500"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold">طلب انضمام جديد: <span class="text-primary">مطعم الديوان</span></p>
+              <p class="text-xs text-gray-400">بانتظار المراجعة</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">منذ 30 دقيقة</span>
+          </div>
+          
+          <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-cream transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="shield-off" class="w-5 h-5 text-error"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold">تم إيقاف مطعم: <span class="text-error">برجر لاب</span></p>
+              <p class="text-xs text-gray-400">مخالفة شروط الاستخدام</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">منذ ساعة</span>
+          </div>
+          
+          <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-cream transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="check-circle" class="w-5 h-5 text-amber-500"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold">تمت الموافقة على انضمام: <span class="text-success">مطعم بيتزا نابولي</span></p>
+              <p class="text-xs text-gray-400">تم تفعيل الحساب بنجاح</p>
+            </div>
+            <span class="text-xs text-gray-400 flex-shrink-0">منذ ساعتين</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== صفحة إدارة المطاعم ========== -->
+    <div id="page-restaurants" class="page p-4 lg:p-8 space-y-6 hidden">
+      
+      <!-- الشريط العلوي -->
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h3 class="text-lg font-bold">🏪 جميع المطاعم</h3>
+        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div class="relative flex-1 sm:flex-initial">
+            <i data-lucide="search" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+            <input type="text" id="restaurant-search" oninput="filterRestaurants()" placeholder="ابحث عن مطعم..."
+              class="w-full sm:w-64 pr-10 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+          </div>
+          <select id="restaurant-filter" onchange="filterRestaurants()"
+            class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+            <option value="all">الكل</option>
+            <option value="active">مفعّل</option>
+            <option value="inactive">معطّل</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- شبكة المطاعم -->
+      <div id="restaurants-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+        <!-- يتم ملؤها بالجافاسكربت -->
+      </div>
+      
+      <!-- حالة فارغة -->
+      <div id="restaurants-empty" class="hidden text-center py-16">
+        <div class="text-6xl mb-4">🔍</div>
+        <h3 class="text-lg font-bold text-gray-500 mb-2">لا توجد نتائج</h3>
+        <p class="text-sm text-gray-400">جرّب تغيير كلمة البحث أو الفلتر</p>
+      </div>
+    </div>
+
+    <!-- ========== صفحة إدارة المستخدمين ========== -->
+    <div id="page-users" class="page p-4 lg:p-8 space-y-6 hidden">
+      
+      <!-- الشريط العلوي -->
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h3 class="text-lg font-bold">👥 جميع المستخدمين</h3>
+        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <div class="relative flex-1 sm:flex-initial">
+            <i data-lucide="search" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+            <input type="text" id="user-search" oninput="filterUsers()" placeholder="ابحث عن مستخدم..."
+              class="w-full sm:w-64 pr-10 pl-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+          </div>
+          <select id="user-filter" onchange="filterUsers()"
+            class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+            <option value="all">الكل</option>
+            <option value="عميل">عميل</option>
+            <option value="مطعم">مطعم</option>
+            <option value="مدير">مدير</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- جدول المستخدمين (سطح المكتب) -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-50 overflow-hidden hidden md:block">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 text-gray-500">
+                <th class="text-right px-5 py-4 font-semibold">الاسم</th>
+                <th class="text-right px-5 py-4 font-semibold">البريد الإلكتروني</th>
+                <th class="text-right px-5 py-4 font-semibold">الدور</th>
+                <th class="text-right px-5 py-4 font-semibold">الحالة</th>
+                <th class="text-right px-5 py-4 font-semibold">الطلبات</th>
+                <th class="text-right px-5 py-4 font-semibold">تاريخ التسجيل</th>
+                <th class="text-center px-5 py-4 font-semibold">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!-- يتم ملؤه بالجافاسكربت -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- بطاقات المستخدمين (موبايل) -->
+      <div id="users-cards-mobile" class="md:hidden space-y-3">
+        <!-- يتم ملؤه بالجافاسكربت -->
+      </div>
+      
+      <!-- حالة فارغة -->
+      <div id="users-empty" class="hidden text-center py-16">
+        <div class="text-6xl mb-4">🔍</div>
+        <h3 class="text-lg font-bold text-gray-500 mb-2">لا توجد نتائج</h3>
+        <p class="text-sm text-gray-400">جرّب تغيير كلمة البحث أو الفلتر</p>
+      </div>
+      
+      <!-- الترقيم -->
+      <div id="users-pagination" class="flex items-center justify-center gap-2">
+        <!-- يتم ملؤه بالجافاسكربت -->
+      </div>
+    </div>
+
+    <!-- ========== صفحة طلبات الانضمام ========== -->
+    <div id="page-requests" class="page p-4 lg:p-8 space-y-6 hidden">
+      
+      <!-- التبويبات -->
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h3 class="text-lg font-bold">📬 طلبات الانضمام</h3>
+      </div>
+      
+      <div class="flex gap-2 overflow-x-auto pb-2">
+        <button onclick="filterRequests('all')" data-req-filter="all"
+          class="req-filter-btn px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all">الكل</button>
+        <button onclick="filterRequests('pending')" data-req-filter="pending"
+          class="req-filter-btn px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all">معلقة</button>
+        <button onclick="filterRequests('approved')" data-req-filter="approved"
+          class="req-filter-btn px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all">مقبولة</button>
+        <button onclick="filterRequests('rejected')" data-req-filter="rejected"
+          class="req-filter-btn px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all">مرفوضة</button>
+      </div>
+      
+      <!-- قائمة الطلبات -->
+      <div id="requests-list" class="space-y-4">
+        <!-- يتم ملؤه بالجافاسكربت -->
+      </div>
+      
+      <!-- حالة فارغة -->
+      <div id="requests-empty" class="hidden text-center py-16">
+        <div class="text-6xl mb-4">📭</div>
+        <h3 class="text-lg font-bold text-gray-500 mb-2">لا توجد طلبات</h3>
+        <p class="text-sm text-gray-400">لا توجد طلبات في هذه الفئة</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========== مودال تفاصيل المطعم ========== -->
+  <div id="restaurant-modal" class="modal-backdrop" onclick="if(event.target===this) closeModal('restaurant-modal')">
+    <div class="bg-white rounded-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto animate-scale-in">
+      <div class="p-6">
+        <!-- رأس المودال -->
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-bold">تفاصيل المطعم</h3>
+          <button onclick="closeModal('restaurant-modal')" class="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        
+        <div id="restaurant-modal-content">
+          <!-- يتم ملؤه بالجافاسكربت -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== مودال تفاصيل المستخدم ========== -->
+  <div id="user-modal" class="modal-backdrop" onclick="if(event.target===this) closeModal('user-modal')">
+    <div class="bg-white rounded-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto animate-scale-in">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-bold">تفاصيل المستخدم</h3>
+          <button onclick="closeModal('user-modal')" class="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div id="user-modal-content">
+          <!-- يتم ملؤه بالجافاسكربت -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== مودال التأكيد ========== -->
+  <div id="confirm-modal" class="modal-backdrop" onclick="if(event.target===this) closeModal('confirm-modal')">
+    <div class="bg-white rounded-2xl w-full max-w-sm mx-4 animate-scale-in">
+      <div class="p-6 text-center">
+        <div id="confirm-icon" class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"></div>
+        <h3 id="confirm-title" class="text-lg font-bold mb-2"></h3>
+        <p id="confirm-message" class="text-sm text-gray-500 mb-6"></p>
+        <div class="flex gap-3">
+          <button onclick="closeModal('confirm-modal')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors">إلغاء</button>
+          <button id="confirm-action-btn" class="flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors">تأكيد</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== مودال سبب الرفض ========== -->
+  <div id="reject-modal" class="modal-backdrop" onclick="if(event.target===this) closeModal('reject-modal')">
+    <div class="bg-white rounded-2xl w-full max-w-md mx-4 animate-scale-in">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold">سبب الرفض</h3>
+          <button onclick="closeModal('reject-modal')" class="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">يرجى كتابة سبب رفض طلب الانضمام</p>
+        <textarea id="reject-reason" rows="3" placeholder="اكتب سبب الرفض هنا..."
+          class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-error/20 focus:border-error resize-none transition-all"></textarea>
+        <p id="reject-error" class="text-xs text-error mt-1 hidden">يرجى كتابة سبب الرفض</p>
+        <div class="flex gap-3 mt-4">
+          <button onclick="closeModal('reject-modal')" class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold hover:bg-gray-50 transition-colors">إلغاء</button>
+          <button id="reject-confirm-btn" class="flex-1 px-4 py-2.5 rounded-xl bg-error text-white text-sm font-semibold hover:bg-red-700 transition-colors">رفض الطلب</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========== الجافاسكربت ========== -->
+  <script>
+    // ==========================================
+    // البيانات الوهمية
+    // ==========================================
+    
+    // بيانات المطاعم
+    const restaurants = [
+      { id: 1, name: 'مطعم الشام', type: 'مشاوي', owner: 'محمد العلي', phone: '0501234567', email: 'sham@food.com', emoji: '🥩', gradient: 'from-red-400 to-orange-500', active: true, rating: 4.8, orders: 342, revenue: 45200, joined: '2024-01-15' },
+      { id: 2, name: 'بيتزا نابولي', type: 'بيتزا', owner: 'أحمد حسن', phone: '0557654321', email: 'napoli@food.com', emoji: '🍕', gradient: 'from-yellow-400 to-red-500', active: true, rating: 4.5, orders: 285, revenue: 38500, joined: '2024-02-20' },
+      { id: 3, name: 'سوشي تايم', type: 'مأكولات بحرية', owner: 'ليلى سعد', phone: '0509876543', email: 'sushi@food.com', emoji: '🍣', gradient: 'from-pink-400 to-purple-500', active: true, rating: 4.9, orders: 198, revenue: 52000, joined: '2024-03-10' },
+      { id: 4, name: 'برجر لاب', type: 'وجبات سريعة', owner: 'خالد فهد', phone: '0541122334', email: 'burger@food.com', emoji: '🍔', gradient: 'from-amber-400 to-orange-600', active: false, rating: 3.8, orders: 156, revenue: 18500, joined: '2024-01-28' },
+      { id: 5, name: 'حلويات الشرق', type: 'حلويات', owner: 'نورة أحمد', phone: '0533445566', email: 'sweets@food.com', emoji: '🍰', gradient: 'from-pink-300 to-rose-500', active: true, rating: 4.7, orders: 423, revenue: 31000, joined: '2023-11-05' },
+      { id: 6, name: 'تاكو فييستا', type: 'وجبات سريعة', owner: 'عمر حمدي', phone: '0566778899', email: 'taco@food.com', emoji: '🌮', gradient: 'from-green-400 to-teal-500', active: true, rating: 4.3, orders: 167, revenue: 22000, joined: '2024-04-01' },
+      { id: 7, name: 'صحتين سلطات', type: 'صحي', owner: 'دينا محمود', phone: '0522334455', email: 'salad@food.com', emoji: '🥗', gradient: 'from-emerald-400 to-green-600', active: true, rating: 4.6, orders: 234, revenue: 28000, joined: '2024-02-14' },
+      { id: 8, name: 'مطعم البيت', type: 'مشاوي', owner: 'سامي خليل', phone: '0577889900', email: 'bait@food.com', emoji: '🍖', gradient: 'from-orange-400 to-red-600', active: true, rating: 4.4, orders: 312, revenue: 41000, joined: '2023-12-20' },
+      { id: 9, name: 'كريب ستيشن', type: 'حلويات', owner: 'ريم عبدالله', phone: '0511223344', email: 'crepe@food.com', emoji: '🧇', gradient: 'from-yellow-300 to-amber-500', active: false, rating: 3.5, orders: 89, revenue: 9500, joined: '2024-05-10' },
+      { id: 10, name: 'مطعم الخليج', type: 'مأكولات بحرية', owner: 'فيصل ناصر', phone: '0544556677', email: 'gulf@food.com', emoji: '🦐', gradient: 'from-cyan-400 to-blue-500', active: true, rating: 4.2, orders: 178, revenue: 35000, joined: '2024-03-25' },
+    ];
+    
+    // بيانات المستخدمين
+    const users = [
+      { id: 1, name: 'سارة أحمد', email: 'sara@email.com', role: 'عميل', active: true, orders: 23, joined: '2024-08-15', phone: '0501111111' },
+      { id: 2, name: 'محمد العلي', email: 'mali@email.com', role: 'مطعم', active: true, orders: 342, joined: '2024-01-15', phone: '0501234567' },
+      { id: 3, name: 'فاطمة خالد', email: 'fatima@email.com', role: 'عميل', active: true, orders: 15, joined: '2024-07-20', phone: '0502222222' },
+      { id: 4, name: 'أحمد حسن', email: 'ahmad@email.com', role: 'مطعم', active: true, orders: 285, joined: '2024-02-20', phone: '0557654321' },
+      { id: 5, name: 'نورة سعد', email: 'noura@email.com', role: 'عميل', active: false, orders: 8, joined: '2024-06-10', phone: '0503333333' },
+      { id: 6, name: 'عبدالله محمد', email: 'admin@foodie.com', role: 'مدير', active: true, orders: 0, joined: '2023-01-01', phone: '0504444444' },
+      { id: 7, name: 'ليلى سعد', email: 'layla@email.com', role: 'مطعم', active: true, orders: 198, joined: '2024-03-10', phone: '0509876543' },
+      { id: 8, name: 'خالد فهد', email: 'khaled@email.com', role: 'مطعم', active: false, orders: 156, joined: '2024-01-28', phone: '0541122334' },
+      { id: 9, name: 'مريم عبدالرحمن', email: 'mariam@email.com', role: 'عميل', active: true, orders: 45, joined: '2024-04-05', phone: '0505555555' },
+      { id: 10, name: 'ياسر حمدان', email: 'yaser@email.com', role: 'عميل', active: true, orders: 31, joined: '2024-05-12', phone: '0506666666' },
+      { id: 11, name: 'هند العتيبي', email: 'hind@email.com', role: 'عميل', active: true, orders: 19, joined: '2024-09-01', phone: '0507777777' },
+      { id: 12, name: 'عمر حمدي', email: 'omar@email.com', role: 'مطعم', active: true, orders: 167, joined: '2024-04-01', phone: '0566778899' },
+      { id: 13, name: 'رانيا فؤاد', email: 'rania@email.com', role: 'عميل', active: false, orders: 3, joined: '2024-10-15', phone: '0508888888' },
+      { id: 14, name: 'سلطان القحطاني', email: 'sultan@email.com', role: 'عميل', active: true, orders: 67, joined: '2024-03-18', phone: '0509999999' },
+      { id: 15, name: 'دينا محمود', email: 'dina@email.com', role: 'مطعم', active: true, orders: 234, joined: '2024-02-14', phone: '0522334455' },
+      { id: 16, name: 'منى الشهري', email: 'mona@email.com', role: 'عميل', active: true, orders: 12, joined: '2024-11-01', phone: '0510000001' },
+      { id: 17, name: 'سامي خليل', email: 'sami@email.com', role: 'مطعم', active: true, orders: 312, joined: '2023-12-20', phone: '0577889900' },
+      { id: 18, name: 'لمى العنزي', email: 'lama@email.com', role: 'عميل', active: true, orders: 28, joined: '2024-07-08', phone: '0510000002' },
+      { id: 19, name: 'فيصل ناصر', email: 'faisal@email.com', role: 'مطعم', active: true, orders: 178, joined: '2024-03-25', phone: '0544556677' },
+      { id: 20, name: 'وفاء الحربي', email: 'wafa@email.com', role: 'مدير', active: true, orders: 0, joined: '2023-06-15', phone: '0510000003' },
+    ];
+    
+    // بيانات طلبات الانضمام
+    const joinRequests = [
+      { id: 1, restaurantName: 'مطعم الديوان', ownerName: 'طارق يوسف', phone: '0551234567', email: 'diwan@food.com', type: 'مشاوي', description: 'مطعم متخصص في المشاوي والأكلات الشرقية التقليدية، لدينا خبرة 10 سنوات في المجال', date: '2024-11-19', status: 'pending' },
+      { id: 2, restaurantName: 'مقهى اللوتس', ownerName: 'سلمى ناصر', phone: '0559876543', email: 'lotus@food.com', type: 'مشروبات', description: 'مقهى متخصص في القهوة المختصة والمشروبات الباردة والحلويات الخفيفة', date: '2024-11-18', status: 'pending' },
+      { id: 3, restaurantName: 'وافل هاوس', ownerName: 'ريان خالد', phone: '0543216789', email: 'waffle@food.com', type: 'حلويات', description: 'متخصصون في الوافل البلجيكي والكريب بنكهات متنوعة ومبتكرة', date: '2024-11-20', status: 'pending' },
+      { id: 4, restaurantName: 'بيتزا نابولي', ownerName: 'أحمد حسن', phone: '0557654321', email: 'napoli@food.com', type: 'بيتزا', description: 'بيتزا إيطالية أصلية بعجينة طازجة يومياً ومكونات مستوردة', date: '2024-11-10', status: 'approved' },
+      { id: 5, restaurantName: 'مطعم النجوم', ownerName: 'عادل سمير', phone: '0536547890', email: 'stars@food.com', type: 'وجبات سريعة', description: 'مطعم وجبات سريعة متنوعة', date: '2024-11-08', status: 'approved' },
+      { id: 6, restaurantName: 'شاورما بلس', ownerName: 'جمال الدين', phone: '0548907654', email: 'shawarma@food.com', type: 'وجبات سريعة', description: 'نقدم أفضل أنواع الشاورما', date: '2024-11-05', status: 'rejected', rejectReason: 'عدم استيفاء الشروط المطلوبة - لا يوجد رخصة تجارية سارية' },
+    ];
+    
+    // ==========================================
+    // حالة التطبيق
+    // ==========================================
+    let currentPage = 'dashboard';
+    let usersCurrentPage = 1;
+    const usersPerPage = 8;
+    let currentRequestFilter = 'all';
+    
+    // ==========================================
+    // التنقل بين الصفحات
+    // ==========================================
+    function navigateTo(page) {
+      currentPage = page;
+      
+      // إخفاء جميع الصفحات
+      document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+      
+      // إظهار الصفحة المطلوبة
+      const pageEl = document.getElementById('page-' + page);
+      if (pageEl) {
+        pageEl.classList.remove('hidden');
+        // إعادة تشغيل الأنيميشن
+        pageEl.querySelectorAll('.animate-fade-in, .animate-slide-in').forEach(el => {
+          el.style.animation = 'none';
+          el.offsetHeight; // إعادة التدفق
+          el.style.animation = '';
+        });
+      }
+      
+      // تحديث السايدبار
+      document.querySelectorAll('.nav-item').forEach(item => {
+        const nav = item.dataset.nav;
+        if (nav === page) {
+          item.classList.add('bg-primary', 'text-white', 'shadow-md', 'shadow-primary/20');
+          item.classList.remove('text-gray-500', 'hover:bg-gray-50');
+        } else {
+          item.classList.remove('bg-primary', 'text-white', 'shadow-md', 'shadow-primary/20');
+          item.classList.add('text-gray-500', 'hover:bg-gray-50');
+        }
+      });
+      
+      // تحديث عنوان الصفحة
+      const titles = {
+        dashboard: 'لوحة التحكم',
+        restaurants: 'إدارة المطاعم',
+        users: 'إدارة المستخدمين',
+        requests: 'طلبات الانضمام'
+      };
+      document.getElementById('page-title').textContent = titles[page] || '';
+      
+      // إغلاق السايدبار على الموبايل
+      if (window.innerWidth < 1024) {
+        closeSidebar();
+      }
+      
+      // تحديث المحتوى
+      if (page === 'restaurants') renderRestaurants();
+      if (page === 'users') { usersCurrentPage = 1; renderUsers(); }
+      if (page === 'requests') { currentRequestFilter = 'all'; renderRequests(); }
+      
+      // إعادة تهيئة الأيقونات
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+    
+    // ==========================================
+    // السايدبار
+    // ==========================================
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
+    
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('active');
+    }
+    
+    // ==========================================
+    // التوست (الإشعارات)
+    // ==========================================
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-success',
+        error: 'bg-error',
+        info: 'bg-blue-500',
+        warning: 'bg-amber-500'
+      };
+      const icons = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        info: 'info',
+        warning: 'alert-triangle'
+      };
+      
+      toast.className = `toast ${colors[type]} text-white px-5 py-3.5 rounded-2xl shadow-lg flex items-center gap-3`;
+      toast.innerHTML = `
+        <i data-lucide="${icons[type]}" class="w-5 h-5 flex-shrink-0"></i>
+        <span class="text-sm font-semibold">${message}</span>
+      `;
+      
+      container.appendChild(toast);
+      lucide.createIcons();
+      
+      setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+    
+    // ==========================================
+    // المودالات
+    // ==========================================
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+    
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    
+    function showConfirm(title, message, actionText, actionColor, onConfirm) {
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      
+      const btn = document.getElementById('confirm-action-btn');
+      btn.textContent = actionText;
+      btn.className = `flex-1 px-4 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${actionColor}`;
+      btn.onclick = () => {
+        closeModal('confirm-modal');
+        onConfirm();
+      };
+      
+      const iconDiv = document.getElementById('confirm-icon');
+      if (actionColor.includes('error') || actionColor.includes('red')) {
+        iconDiv.className = 'w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-red-50';
+        iconDiv.innerHTML = '<i data-lucide="alert-triangle" class="w-8 h-8 text-error"></i>';
+      } else {
+        iconDiv.className = 'w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-green-50';
+        iconDiv.innerHTML = '<i data-lucide="check-circle" class="w-8 h-8 text-success"></i>';
+      }
+      
+      openModal('confirm-modal');
+    }
+    
+    // ==========================================
+    // إدارة المطاعم
+    // ==========================================
+    function renderRestaurants() {
+      const search = document.getElementById('restaurant-search').value.trim().toLowerCase();
+      const filter = document.getElementById('restaurant-filter').value;
+      
+      let filtered = restaurants.filter(r => {
+        const matchSearch = !search || r.name.includes(search) || r.owner.includes(search) || r.type.includes(search);
+        const matchFilter = filter === 'all' || (filter === 'active' && r.active) || (filter === 'inactive' && !r.active);
+        return matchSearch && matchFilter;
+      });
+      
+      const grid = document.getElementById('restaurants-grid');
+      const empty = document.getElementById('restaurants-empty');
+      
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      
+      empty.classList.add('hidden');
+      
+      grid.innerHTML = filtered.map((r, i) => `
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 animate-fade-in" style="animation-delay: ${i * 0.05}s; opacity: 0;">
+          <div class="flex items-start gap-3 mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${r.gradient} flex items-center justify-center text-2xl flex-shrink-0">${r.emoji}</div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-sm truncate">${r.name}</h4>
+              <p class="text-xs text-gray-400">${r.type}</p>
+              <p class="text-xs text-gray-400 mt-0.5">المالك: ${r.owner}</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold flex-shrink-0 ${r.active ? 'bg-green-50 text-success' : 'bg-red-50 text-error'}">${r.active ? 'مفعّل' : 'معطّل'}</span>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+            <div class="bg-cream rounded-xl py-2">
+              <p class="text-sm font-bold text-primary">${r.rating}</p>
+              <p class="text-[10px] text-gray-400">التقييم</p>
+            </div>
+            <div class="bg-cream rounded-xl py-2">
+              <p class="text-sm font-bold text-primary">${r.orders}</p>
+              <p class="text-[10px] text-gray-400">الطلبات</p>
+            </div>
+            <div class="bg-cream rounded-xl py-2">
+              <p class="text-sm font-bold text-primary">${(r.revenue / 1000).toFixed(1)}K</p>
+              <p class="text-[10px] text-gray-400">الإيرادات</p>
+            </div>
+          </div>
+          
+          <div class="flex gap-2">
+            <button onclick="showRestaurantDetail(${r.id})" class="flex-1 px-3 py-2 rounded-xl border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-all">
+              عرض التفاصيل
+            </button>
+            <button onclick="toggleRestaurantStatus(${r.id})" class="px-3 py-2 rounded-xl text-xs font-semibold transition-all ${r.active ? 'bg-red-50 text-error hover:bg-red-100' : 'bg-green-50 text-success hover:bg-green-100'}">
+              ${r.active ? 'إيقاف' : 'تفعيل'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+      
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+    
+    function filterRestaurants() {
+      renderRestaurants();
+    }
+    
+    function showRestaurantDetail(id) {
+      const r = restaurants.find(rest => rest.id === id);
+      if (!r) return;
+      
+      document.getElementById('restaurant-modal-content').innerHTML = `
+        <div class="text-center mb-6">
+          <div class="w-20 h-20 rounded-2xl bg-gradient-to-br ${r.gradient} flex items-center justify-center text-4xl mx-auto mb-3">${r.emoji}</div>
+          <h4 class="text-xl font-bold">${r.name}</h4>
+          <p class="text-sm text-gray-400 mt-1">${r.type}</p>
+          <span class="inline-block mt-2 px-3 py-1 rounded-lg text-xs font-semibold ${r.active ? 'bg-green-50 text-success' : 'bg-red-50 text-error'}">${r.active ? 'مفعّل' : 'معطّل'}</span>
+        </div>
+        
+        <div class="space-y-3 mb-6">
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="user" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">المالك:</span>
+            <span class="text-sm font-semibold mr-auto">${r.owner}</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="phone" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">الهاتف:</span>
+            <span class="text-sm font-semibold mr-auto" dir="ltr">${r.phone}</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">البريد:</span>
+            <span class="text-sm font-semibold mr-auto" dir="ltr">${r.email}</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">تاريخ الانضمام:</span>
+            <span class="text-sm font-semibold mr-auto">${r.joined}</span>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-3 mb-6">
+          <div class="text-center p-3 rounded-xl bg-orange-50">
+            <p class="text-lg font-bold text-primary">${r.rating} ⭐</p>
+            <p class="text-xs text-gray-400 mt-1">التقييم</p>
+          </div>
+          <div class="text-center p-3 rounded-xl bg-blue-50">
+            <p class="text-lg font-bold text-blue-500">${r.orders}</p>
+            <p class="text-xs text-gray-400 mt-1">الطلبات</p>
+          </div>
+          <div class="text-center p-3 rounded-xl bg-green-50">
+            <p class="text-lg font-bold text-success">${r.revenue.toLocaleString()}</p>
+            <p class="text-xs text-gray-400 mt-1">الإيرادات (ر.س)</p>
+          </div>
+        </div>
+        
+        <button onclick="toggleRestaurantStatus(${r.id}); closeModal('restaurant-modal');" 
+          class="w-full py-3 rounded-xl text-sm font-bold text-white transition-all ${r.active ? 'bg-error hover:bg-red-700' : 'bg-success hover:bg-green-700'}">
+          ${r.active ? '⛔ إيقاف المطعم' : '✅ تفعيل المطعم'}
+        </button>
+      `;
+      
+      openModal('restaurant-modal');
+    }
+    
+    function toggleRestaurantStatus(id) {
+      const r = restaurants.find(rest => rest.id === id);
+      if (!r) return;
+      
+      const newStatus = !r.active;
+      const title = newStatus ? 'تفعيل المطعم' : 'إيقاف المطعم';
+      const message = newStatus 
+        ? `هل أنت متأكد من تفعيل "${r.name}"؟ سيتمكن من استقبال الطلبات مجدداً.`
+        : `هل أنت متأكد من إيقاف "${r.name}"؟ لن يتمكن من استقبال طلبات جديدة.`;
+      const actionText = newStatus ? 'تفعيل' : 'إيقاف';
+      const actionColor = newStatus ? 'bg-success hover:bg-green-700' : 'bg-error hover:bg-red-700';
+      
+      showConfirm(title, message, actionText, actionColor, () => {
+        r.active = newStatus;
+        showToast(newStatus ? `تم تفعيل "${r.name}" بنجاح` : `تم إيقاف "${r.name}"`, newStatus ? 'success' : 'warning');
+        renderRestaurants();
+      });
+    }
+    
+    // ==========================================
+    // إدارة المستخدمين
+    // ==========================================
+    function renderUsers() {
+      const search = document.getElementById('user-search').value.trim().toLowerCase();
+      const filter = document.getElementById('user-filter').value;
+      
+      let filtered = users.filter(u => {
+        const matchSearch = !search || u.name.includes(search) || u.email.includes(search);
+        const matchFilter = filter === 'all' || u.role === filter;
+        return matchSearch && matchFilter;
+      });
+      
+      const empty = document.getElementById('users-empty');
+      const pagination = document.getElementById('users-pagination');
+      
+      if (filtered.length === 0) {
+        document.getElementById('users-table-body').innerHTML = '';
+        document.getElementById('users-cards-mobile').innerHTML = '';
+        empty.classList.remove('hidden');
+        pagination.innerHTML = '';
+        return;
+      }
+      
+      empty.classList.add('hidden');
+      
+      // حساب الترقيم
+      const totalPages = Math.ceil(filtered.length / usersPerPage);
+      if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
+      const start = (usersCurrentPage - 1) * usersPerPage;
+      const paged = filtered.slice(start, start + usersPerPage);
+      
+      // ألوان الأدوار
+      const roleColors = {
+        'عميل': 'bg-blue-50 text-blue-600',
+        'مطعم': 'bg-orange-50 text-primary',
+        'مدير': 'bg-purple-50 text-purple-600'
+      };
+      
+      // جدول سطح المكتب
+      document.getElementById('users-table-body').innerHTML = paged.map((u, i) => `
+        <tr class="border-t border-gray-50 table-row-hover transition-colors" style="animation: fadeIn 0.3s ease-out ${i * 0.03}s both;">
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-amber-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                ${u.name.charAt(0)}
+              </div>
+              <span class="font-semibold text-sm">${u.name}</span>
+            </div>
+          </td>
+          <td class="px-5 py-3.5 text-sm text-gray-500" dir="ltr">${u.email}</td>
+          <td class="px-5 py-3.5">
+            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold ${roleColors[u.role]}">${u.role}</span>
+          </td>
+          <td class="px-5 py-3.5">
+            <span class="px-2.5 py-1 rounded-lg text-xs font-semibold ${u.active ? 'bg-green-50 text-success' : 'bg-red-50 text-error'}">${u.active ? 'نشط' : 'محظور'}</span>
+          </td>
+          <td class="px-5 py-3.5 text-sm font-semibold">${u.orders}</td>
+          <td class="px-5 py-3.5 text-sm text-gray-500">${u.joined}</td>
+          <td class="px-5 py-3.5">
+            <div class="flex items-center justify-center gap-1">
+              <button onclick="showUserDetail(${u.id})" class="p-2 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-500 transition-colors" title="عرض">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+              <button onclick="toggleUserStatus(${u.id})" class="p-2 rounded-lg transition-colors ${u.active ? 'hover:bg-red-50 text-gray-400 hover:text-error' : 'hover:bg-green-50 text-gray-400 hover:text-success'}" title="${u.active ? 'حظر' : 'إلغاء الحظر'}">
+                <i data-lucide="${u.active ? 'ban' : 'check-circle'}" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+      
+      // بطاقات الموبايل
+      document.getElementById('users-cards-mobile').innerHTML = paged.map((u, i) => `
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-50 animate-fade-in" style="animation-delay: ${i * 0.05}s; opacity: 0;">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-11 h-11 rounded-full bg-gradient-to-br from-primary to-amber-400 flex items-center justify-center text-white font-bold flex-shrink-0">
+              ${u.name.charAt(0)}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h4 class="font-bold text-sm truncate">${u.name}</h4>
+              <p class="text-xs text-gray-400 truncate" dir="ltr">${u.email}</p>
+            </div>
+            <div class="flex flex-col gap-1 items-end">
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${roleColors[u.role]}">${u.role}</span>
+              <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${u.active ? 'bg-green-50 text-success' : 'bg-red-50 text-error'}">${u.active ? 'نشط' : 'محظور'}</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-400 mb-3">
+            <span>الطلبات: <strong class="text-dark">${u.orders}</strong></span>
+            <span>التسجيل: ${u.joined}</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="showUserDetail(${u.id})" class="flex-1 px-3 py-2 rounded-xl border border-primary text-primary text-xs font-semibold hover:bg-primary hover:text-white transition-all">عرض</button>
+            <button onclick="toggleUserStatus(${u.id})" class="px-3 py-2 rounded-xl text-xs font-semibold transition-all ${u.active ? 'bg-red-50 text-error hover:bg-red-100' : 'bg-green-50 text-success hover:bg-green-100'}">
+              ${u.active ? 'حظر' : 'إلغاء الحظر'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+      
+      // الترقيم
+      if (totalPages > 1) {
+        let paginationHTML = '';
+        // زر السابق
+        paginationHTML += `<button onclick="goToUserPage(${usersCurrentPage - 1})" ${usersCurrentPage === 1 ? 'disabled' : ''} class="px-3 py-2 rounded-xl text-sm font-semibold transition-all ${usersCurrentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100'}">
+          <i data-lucide="chevron-right" class="w-4 h-4"></i>
+        </button>`;
+        
+        for (let p = 1; p <= totalPages; p++) {
+          paginationHTML += `<button onclick="goToUserPage(${p})" class="w-10 h-10 rounded-xl text-sm font-semibold transition-all ${p === usersCurrentPage ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-gray-500 hover:bg-gray-100'}">${p}</button>`;
+        }
+        
+        // زر التالي
+        paginationHTML += `<button onclick="goToUserPage(${usersCurrentPage + 1})" ${usersCurrentPage === totalPages ? 'disabled' : ''} class="px-3 py-2 rounded-xl text-sm font-semibold transition-all ${usersCurrentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100'}">
+          <i data-lucide="chevron-left" class="w-4 h-4"></i>
+        </button>`;
+        
+        pagination.innerHTML = paginationHTML;
+      } else {
+        pagination.innerHTML = '';
+      }
+      
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+    
+    function filterUsers() {
+      usersCurrentPage = 1;
+      renderUsers();
+    }
+    
+    function goToUserPage(page) {
+      const search = document.getElementById('user-search').value.trim().toLowerCase();
+      const filter = document.getElementById('user-filter').value;
+      let filtered = users.filter(u => {
+        const matchSearch = !search || u.name.includes(search) || u.email.includes(search);
+        const matchFilter = filter === 'all' || u.role === filter;
+        return matchSearch && matchFilter;
+      });
+      const totalPages = Math.ceil(filtered.length / usersPerPage);
+      if (page < 1 || page > totalPages) return;
+      usersCurrentPage = page;
+      renderUsers();
+    }
+    
+    function showUserDetail(id) {
+      const u = users.find(user => user.id === id);
+      if (!u) return;
+      
+      const roleColors = {
+        'عميل': 'bg-blue-50 text-blue-600',
+        'مطعم': 'bg-orange-50 text-primary',
+        'مدير': 'bg-purple-50 text-purple-600'
+      };
+      
+      document.getElementById('user-modal-content').innerHTML = `
+        <div class="text-center mb-6">
+          <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-amber-400 flex items-center justify-center text-white text-3xl font-bold mx-auto mb-3">
+            ${u.name.charAt(0)}
+          </div>
+          <h4 class="text-xl font-bold">${u.name}</h4>
+          <div class="flex items-center justify-center gap-2 mt-2">
+            <span class="px-3 py-1 rounded-lg text-xs font-semibold ${roleColors[u.role]}">${u.role}</span>
+            <span class="px-3 py-1 rounded-lg text-xs font-semibold ${u.active ? 'bg-green-50 text-success' : 'bg-red-50 text-error'}">${u.active ? 'نشط' : 'محظور'}</span>
+          </div>
+        </div>
+        
+        <div class="space-y-3 mb-6">
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="mail" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">البريد:</span>
+            <span class="text-sm font-semibold mr-auto" dir="ltr">${u.email}</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="phone" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">الهاتف:</span>
+            <span class="text-sm font-semibold mr-auto" dir="ltr">${u.phone}</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="shopping-bag" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">عدد الطلبات:</span>
+            <span class="text-sm font-semibold mr-auto">${u.orders}</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-xl bg-cream">
+            <i data-lucide="calendar" class="w-4 h-4 text-gray-400"></i>
+            <span class="text-sm text-gray-500">تاريخ التسجيل:</span>
+            <span class="text-sm font-semibold mr-auto">${u.joined}</span>
+          </div>
+        </div>
+        
+        <button onclick="toggleUserStatus(${u.id}); closeModal('user-modal');" 
+          class="w-full py-3 rounded-xl text-sm font-bold text-white transition-all ${u.active ? 'bg-error hover:bg-red-700' : 'bg-success hover:bg-green-700'}">
+          ${u.active ? '⛔ حظر المستخدم' : '✅ إلغاء الحظر'}
+        </button>
+      `;
+      
+      openModal('user-modal');
+    }
+    
+    function toggleUserStatus(id) {
+      const u = users.find(user => user.id === id);
+      if (!u) return;
+      
+      if (u.role === 'مدير') {
+        showToast('لا يمكن تغيير حالة المدير', 'error');
+        return;
+      }
+      
+      const newStatus = !u.active;
+      const title = newStatus ? 'إلغاء الحظر' : 'حظر المستخدم';
+      const message = newStatus 
+        ? `هل أنت متأكد من إلغاء حظر "${u.name}"؟`
+        : `هل أنت متأكد من حظر "${u.name}"؟ لن يتمكن من استخدام المنصة.`;
+      const actionText = newStatus ? 'إلغاء الحظر' : 'حظر';
+      const actionColor = newStatus ? 'bg-success hover:bg-green-700' : 'bg-error hover:bg-red-700';
+      
+      showConfirm(title, message, actionText, actionColor, () => {
+        u.active = newStatus;
+        showToast(newStatus ? `تم إلغاء حظر "${u.name}"` : `تم حظر "${u.name}"`, newStatus ? 'success' : 'warning');
+        renderUsers();
+      });
+    }
+    
+    // ==========================================
+    // طلبات الانضمام
+    // ==========================================
+    function renderRequests() {
+      const filter = currentRequestFilter;
+      
+      // تحديث أزرار الفلتر
+      document.querySelectorAll('.req-filter-btn').forEach(btn => {
+        const f = btn.dataset.reqFilter;
+        if (f === filter) {
+          btn.classList.add('bg-primary', 'text-white', 'shadow-md', 'shadow-primary/20');
+          btn.classList.remove('bg-gray-100', 'text-gray-500');
+        } else {
+          btn.classList.remove('bg-primary', 'text-white', 'shadow-md', 'shadow-primary/20');
+          btn.classList.add('bg-gray-100', 'text-gray-500');
+        }
+      });
+      
+      let filtered = joinRequests;
+      if (filter !== 'all') {
+        filtered = joinRequests.filter(r => r.status === filter);
+      }
+      
+      const list = document.getElementById('requests-list');
+      const empty = document.getElementById('requests-empty');
+      
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      
+      empty.classList.add('hidden');
+      
+      const statusConfig = {
+        pending: { text: 'معلقة', class: 'bg-amber-50 text-amber-600', icon: '⏳' },
+        approved: { text: 'مقبولة', class: 'bg-green-50 text-success', icon: '✅' },
+        rejected: { text: 'مرفوضة', class: 'bg-red-50 text-error', icon: '❌' }
+      };
+      
+      const typeEmoji = {
+        'مشاوي': '🥩',
+        'بيتزا': '🍕',
+        'حلويات': '🍰',
+        'مشروبات': '☕',
+        'وجبات سريعة': '🍔',
+        'مأكولات بحرية': '🦐',
+        'صحي': '🥗'
+      };
+      
+      list.innerHTML = filtered.map((r, i) => {
+        const sc = statusConfig[r.status];
+        const emoji = typeEmoji[r.type] || '🍽️';
+        
+        return `
+          <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-50 animate-fade-in" style="animation-delay: ${i * 0.05}s; opacity: 0;">
+            <div class="flex flex-col sm:flex-row gap-4">
+              <!-- المعلومات الرئيسية -->
+              <div class="flex-1">
+                <div class="flex items-start gap-3 mb-3">
+                  <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-amber-100 flex items-center justify-center text-2xl flex-shrink-0">${emoji}</div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h4 class="font-bold">${r.restaurantName}</h4>
+                      <span class="px-2.5 py-1 rounded-lg text-xs font-semibold ${sc.class}">${sc.icon} ${sc.text}</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mt-1">${r.type}</p>
+                  </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-sm">
+                  <div class="flex items-center gap-2 text-gray-500">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                    <span>${r.ownerName}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-gray-500">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                    <span dir="ltr">${r.phone}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-gray-500">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    <span dir="ltr">${r.email}</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-gray-500">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                    <span>${r.date}</span>
+                  </div>
+                </div>
+                
+                <div class="p-3 rounded-xl bg-cream text-sm text-gray-600">
+                  <p class="font-semibold text-xs text-gray-400 mb-1">الوصف:</p>
+                  ${r.description}
+                </div>
+                
+                ${r.rejectReason ? `
+                  <div class="p-3 rounded-xl bg-red-50 text-sm text-error mt-2">
+                    <p class="font-semibold text-xs mb-1">سبب الرفض:</p>
+                    ${r.rejectReason}
+                  </div>
+                ` : ''}
+              </div>
+              
+              <!-- أزرار الإجراء -->
+              ${r.status === 'pending' ? `
+                <div class="flex sm:flex-col gap-2 sm:w-32 flex-shrink-0">
+                  <button onclick="approveRequest(${r.id})" class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-success text-white text-sm font-semibold hover:bg-green-700 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    موافقة
+                  </button>
+                  <button onclick="rejectRequest(${r.id})" class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-error text-white text-sm font-semibold hover:bg-red-700 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                    رفض
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      setTimeout(() => lucide.createIcons(), 50);
+    }
+    
+    function filterRequests(filter) {
+      currentRequestFilter = filter;
+      renderRequests();
+    }
+    
+    function approveRequest(id) {
+      const r = joinRequests.find(req => req.id === id);
+      if (!r) return;
+      
+      showConfirm(
+        'الموافقة على الطلب',
+        `هل أنت متأكد من الموافقة على طلب انضمام "${r.restaurantName}"؟`,
+        'موافقة',
+        'bg-success hover:bg-green-700',
+        () => {
+          r.status = 'approved';
+          showToast(`تمت الموافقة على "${r.restaurantName}" بنجاح! 🎉`, 'success');
+          updateRequestsBadge();
+          renderRequests();
+        }
+      );
+    }
+    
+    function rejectRequest(id) {
+      const r = joinRequests.find(req => req.id === id);
+      if (!r) return;
+      
+      // إعادة تعيين
+      document.getElementById('reject-reason').value = '';
+      document.getElementById('reject-error').classList.add('hidden');
+      
+      document.getElementById('reject-confirm-btn').onclick = () => {
+        const reason = document.getElementById('reject-reason').value.trim();
+        if (!reason) {
+          document.getElementById('reject-error').classList.remove('hidden');
+          document.getElementById('reject-reason').classList.add('border-error');
+          return;
+        }
+        r.status = 'rejected';
+        r.rejectReason = reason;
+        closeModal('reject-modal');
+        showToast(`تم رفض طلب "${r.restaurantName}"`, 'error');
+        updateRequestsBadge();
+        renderRequests();
+      };
+      
+      openModal('reject-modal');
+    }
+    
+    function updateRequestsBadge() {
+      const pending = joinRequests.filter(r => r.status === 'pending').length;
+      const badge = document.getElementById('requests-badge');
+      if (pending > 0) {
+        badge.textContent = pending;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+    
+    // ==========================================
+    // التهيئة
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // تهيئة الأيقونات
+      lucide.createIcons();
+      
+      // الانتقال للوحة التحكم
+      navigateTo('dashboard');
+      
+      // تحديث شارة الطلبات
+      updateRequestsBadge();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Foodie 🍔 - اطلب أشهى المأكولات</title>
+  <!-- خط Cairo من Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#F97316',
+            'primary-dark': '#EA580C',
+            'primary-light': '#FED7AA',
+            bg: '#FFFAF6',
+            text: '#1C1917',
+            success: '#16A34A',
+            error: '#DC2626',
+          },
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+          },
+          borderRadius: {
+            '2xl': '20px',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Cairo', sans-serif; }
+    body { background-color: #FFFAF6; color: #1C1917; }
+
+    /* إخفاء شريط التمرير الأفقي للتصنيفات */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* تأثير الهيكل العظمي للتحميل */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 12px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* تأثير التوست */
+    .toast-enter { animation: slideDown 0.4s ease-out; }
+    .toast-exit { animation: slideUp 0.4s ease-in forwards; }
+    @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slideUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+
+    /* تأثير القصاصات */
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      animation: confettiFall 3s ease-out forwards;
+      z-index: 9999;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* تأثير السلة المنزلقة */
+    .cart-overlay { transition: opacity 0.3s ease; }
+    .cart-panel { transition: transform 0.3s ease; }
+
+    /* انتقالات الصفحات */
+    .page-section { transition: opacity 0.3s ease; }
+
+    /* تأثير hover للبطاقات */
+    .restaurant-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .restaurant-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+
+    .menu-item-card { transition: transform 0.2s ease; }
+    .menu-item-card:hover { transform: translateY(-2px); }
+
+    /* شريط التقدم */
+    .progress-step { transition: all 0.3s ease; }
+
+    /* زر نشط */
+    .filter-btn.active { background-color: #F97316; color: white; }
+    .category-chip.active { background-color: #F97316; color: white; border-color: #F97316; }
+    .tab-btn.active { color: #F97316; border-bottom-color: #F97316; }
+  </style>
+</head>
+<body class="font-cairo min-h-screen bg-bg">
+
+  <!-- ============================================ -->
+  <!-- حاوية التوست -->
+  <!-- ============================================ -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center"></div>
+
+  <!-- ============================================ -->
+  <!-- شريط التنقل العلوي (سطح المكتب والجوال) -->
+  <!-- ============================================ -->
+  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-orange-100">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <!-- الشعار -->
+      <a href="#" onclick="navigateTo('home')" class="flex items-center gap-2 text-2xl font-black text-primary">
+        <span>Foodie 🍔</span>
+      </a>
+
+      <!-- روابط سطح المكتب -->
+      <div class="hidden md:flex items-center gap-6">
+        <a href="#" onclick="navigateTo('home')" class="text-sm font-semibold text-text hover:text-primary transition">الرئيسية</a>
+        <a href="#" onclick="navigateTo('orders')" class="text-sm font-semibold text-text hover:text-primary transition">طلباتي</a>
+      </div>
+
+      <!-- أيقونات -->
+      <div class="flex items-center gap-3">
+        <button onclick="focusSearch()" class="md:hidden p-2 rounded-full hover:bg-orange-50 transition">
+          <i data-lucide="search" class="w-5 h-5 text-text"></i>
+        </button>
+        <button onclick="openCart()" class="relative p-2 rounded-full hover:bg-orange-50 transition">
+          <i data-lucide="shopping-cart" class="w-5 h-5 text-text"></i>
+          <span id="cart-badge" class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+        </button>
+        <a href="#" onclick="navigateTo('orders')" class="hidden md:hidden p-2 rounded-full hover:bg-orange-50 transition">
+          <i data-lucide="clipboard-list" class="w-5 h-5 text-text"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- المحتوى الرئيسي -->
+  <!-- ============================================ -->
+  <main class="pb-24 md:pb-8">
+
+    <!-- ======== شاشة التحميل الهيكلية ======== -->
+    <div id="loading-skeleton" class="hidden max-w-7xl mx-auto px-4 py-6">
+      <div class="skeleton h-48 w-full mb-6"></div>
+      <div class="flex gap-3 mb-6">
+        <div class="skeleton h-10 w-24 rounded-full"></div>
+        <div class="skeleton h-10 w-24 rounded-full"></div>
+        <div class="skeleton h-10 w-24 rounded-full"></div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="skeleton h-64 rounded-2xl"></div>
+        <div class="skeleton h-64 rounded-2xl"></div>
+        <div class="skeleton h-64 rounded-2xl"></div>
+      </div>
+    </div>
+
+    <!-- ======================================== -->
+    <!-- 1. الصفحة الرئيسية -->
+    <!-- ======================================== -->
+    <section id="page-home" class="page-section">
+      <!-- قسم البطل -->
+      <div class="relative bg-gradient-to-l from-orange-500 via-orange-400 to-amber-400 overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+          <div class="absolute text-8xl top-4 left-10 rotate-12">🍕</div>
+          <div class="absolute text-6xl bottom-4 right-20 -rotate-12">🍔</div>
+          <div class="absolute text-7xl top-10 right-1/3 rotate-6">🍣</div>
+          <div class="absolute text-5xl bottom-10 left-1/3 -rotate-6">🌮</div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 py-12 md:py-20 relative z-10 text-center">
+          <h1 class="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">اكتشف أشهى المأكولات<br>من أفضل المطاعم</h1>
+          <p class="text-white/90 text-lg mb-8 font-semibold">توصيل سريع لباب بيتك 🚀</p>
+          <!-- شريط البحث -->
+          <div class="max-w-xl mx-auto relative">
+            <input id="main-search" type="text" placeholder="ابحث عن مطعم أو وجبة..." 
+              class="w-full pr-12 pl-4 py-4 rounded-2xl text-text bg-white shadow-lg text-base focus:outline-none focus:ring-2 focus:ring-orange-300"
+              oninput="filterRestaurants()">
+            <i data-lucide="search" class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- صف التصنيفات -->
+        <div class="mb-6">
+          <h2 class="text-lg font-bold mb-3">تصفح حسب التصنيف</h2>
+          <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+            <button onclick="filterByCategory('all')" class="category-chip active flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-primary text-white font-semibold text-sm transition hover:border-primary" data-cat="all">
+              🍽️ الكل
+            </button>
+            <button onclick="filterByCategory('burger')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-white font-semibold text-sm transition hover:border-primary" data-cat="burger">
+              🍔 برجر
+            </button>
+            <button onclick="filterByCategory('pizza')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-white font-semibold text-sm transition hover:border-primary" data-cat="pizza">
+              🍕 بيتزا
+            </button>
+            <button onclick="filterByCategory('sushi')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-white font-semibold text-sm transition hover:border-primary" data-cat="sushi">
+              🍣 سوشي
+            </button>
+            <button onclick="filterByCategory('dessert')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-white font-semibold text-sm transition hover:border-primary" data-cat="dessert">
+              🍰 حلويات
+            </button>
+            <button onclick="filterByCategory('grill')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-white font-semibold text-sm transition hover:border-primary" data-cat="grill">
+              🥩 مشويات
+            </button>
+            <button onclick="filterByCategory('healthy')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-white font-semibold text-sm transition hover:border-primary" data-cat="healthy">
+              🥗 صحي
+            </button>
+          </div>
+        </div>
+
+        <!-- شريط الفلاتر -->
+        <div class="flex gap-2 mb-6 overflow-x-auto hide-scrollbar pb-2">
+          <button onclick="toggleFilter(this, 'top-rated')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition hover:border-primary">
+            ⭐ الأعلى تقييمًا
+          </button>
+          <button onclick="toggleFilter(this, 'fastest')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition hover:border-primary">
+            ⚡ الأسرع توصيلًا
+          </button>
+          <button onclick="toggleFilter(this, 'free-delivery')" class="filter-btn flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition hover:border-primary">
+            🚚 توصيل مجاني
+          </button>
+        </div>
+
+        <!-- شبكة المطاعم -->
+        <div id="restaurants-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- يتم ملؤها بالجافاسكربت -->
+        </div>
+
+        <!-- حالة عدم وجود نتائج -->
+        <div id="no-results" class="hidden text-center py-16">
+          <div class="text-6xl mb-4">🔍</div>
+          <h3 class="text-xl font-bold mb-2">لا توجد نتائج</h3>
+          <p class="text-gray-500">جرب البحث بكلمات مختلفة</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================== -->
+    <!-- 2. صفحة المطعم -->
+    <!-- ======================================== -->
+    <section id="page-restaurant" class="page-section hidden">
+      <!-- غطاء المطعم -->
+      <div id="restaurant-cover" class="relative h-56 md:h-72 overflow-hidden">
+        <!-- يتم ملؤه بالجافاسكربت -->
+      </div>
+
+      <div class="max-w-5xl mx-auto px-4 -mt-6 relative z-10">
+        <!-- بطاقة معلومات المطعم -->
+        <div id="restaurant-info-card" class="bg-white rounded-2xl shadow-md p-5 mb-6">
+          <!-- يتم ملؤها بالجافاسكربت -->
+        </div>
+
+        <!-- التبويبات -->
+        <div class="flex border-b border-gray-200 mb-6">
+          <button onclick="switchTab('menu')" class="tab-btn active flex-1 py-3 text-center font-bold text-sm border-b-2 border-primary text-primary transition" data-tab="menu">المنيو</button>
+          <button onclick="switchTab('reviews')" class="tab-btn flex-1 py-3 text-center font-bold text-sm border-b-2 border-transparent text-gray-500 transition" data-tab="reviews">التقييمات</button>
+          <button onclick="switchTab('info')" class="tab-btn flex-1 py-3 text-center font-bold text-sm border-b-2 border-transparent text-gray-500 transition" data-tab="info">المعلومات</button>
+        </div>
+
+        <!-- محتوى تبويب المنيو -->
+        <div id="tab-menu" class="tab-content">
+          <!-- شرائح تصنيفات المنيو -->
+          <div class="flex gap-2 mb-6 overflow-x-auto hide-scrollbar pb-2">
+            <button onclick="filterMenu('all')" class="menu-cat-chip category-chip active flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-primary text-white text-sm font-semibold transition" data-mcat="all">الكل</button>
+            <button onclick="filterMenu('bestseller')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="bestseller">🔥 الأكثر مبيعًا</button>
+            <button onclick="filterMenu('burger')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="burger">🍔 برجر</button>
+            <button onclick="filterMenu('sandwich')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="sandwich">🥙 ساندويتشات</button>
+            <button onclick="filterMenu('appetizer')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="appetizer">🧆 مقبلات</button>
+            <button onclick="filterMenu('drink')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="drink">🥤 مشروبات</button>
+          </div>
+          <!-- شبكة عناصر المنيو -->
+          <div id="menu-items-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <!-- يتم ملؤها بالجافاسكربت -->
+          </div>
+        </div>
+
+        <!-- محتوى تبويب التقييمات -->
+        <div id="tab-reviews" class="tab-content hidden">
+          <div id="reviews-list" class="space-y-4 mb-8">
+            <!-- يتم ملؤها بالجافاسكربت -->
+          </div>
+        </div>
+
+        <!-- محتوى تبويب المعلومات -->
+        <div id="tab-info" class="tab-content hidden">
+          <div id="restaurant-details" class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+            <!-- يتم ملؤها بالجافاسكربت -->
+          </div>
+        </div>
+      </div>
+
+      <!-- زر العودة -->
+      <button onclick="navigateTo('home')" class="fixed bottom-24 md:bottom-8 left-6 z-40 bg-white shadow-lg rounded-full p-3 hover:bg-orange-50 transition">
+        <i data-lucide="arrow-left" class="w-5 h-5 text-primary"></i>
+      </button>
+    </section>
+
+    <!-- ======================================== -->
+    <!-- 4. صفحة إتمام الطلب -->
+    <!-- ======================================== -->
+    <section id="page-checkout" class="page-section hidden">
+      <div class="max-w-5xl mx-auto px-4 py-6">
+        <!-- زر الرجوع -->
+        <button onclick="navigateTo('home')" class="flex items-center gap-2 text-primary font-semibold mb-6 hover:underline">
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          العودة للمتجر
+        </button>
+
+        <h1 class="text-2xl font-black mb-6">إتمام الطلب</h1>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- نموذج الطلب -->
+          <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm p-6 mb-6">
+              <h2 class="text-lg font-bold mb-4">معلومات التوصيل</h2>
+              <div class="space-y-4">
+                <!-- الاسم الكامل -->
+                <div>
+                  <label class="block text-sm font-semibold mb-1">الاسم الكامل <span class="text-error">*</span></label>
+                  <input id="checkout-name" type="text" placeholder="أدخل اسمك الكامل" 
+                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none transition text-sm">
+                  <p id="error-name" class="text-error text-xs mt-1 hidden">يرجى إدخال الاسم الكامل</p>
+                </div>
+                <!-- رقم الهاتف -->
+                <div>
+                  <label class="block text-sm font-semibold mb-1">رقم الهاتف <span class="text-error">*</span></label>
+                  <input id="checkout-phone" type="tel" placeholder="05xxxxxxxx" 
+                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none transition text-sm" dir="ltr">
+                  <p id="error-phone" class="text-error text-xs mt-1 hidden">يرجى إدخال رقم هاتف صحيح (يبدأ بـ 05)</p>
+                </div>
+                <!-- العنوان -->
+                <div>
+                  <label class="block text-sm font-semibold mb-1">العنوان <span class="text-error">*</span></label>
+                  <input id="checkout-address" type="text" placeholder="أدخل عنوان التوصيل بالتفصيل" 
+                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none transition text-sm">
+                  <p id="error-address" class="text-error text-xs mt-1 hidden">يرجى إدخال العنوان</p>
+                </div>
+                <!-- ملاحظات -->
+                <div>
+                  <label class="block text-sm font-semibold mb-1">ملاحظات</label>
+                  <textarea id="checkout-notes" rows="3" placeholder="أي ملاحظات خاصة بالطلب..." 
+                    class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-primary focus:outline-none transition text-sm resize-none"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- طريقة الدفع -->
+            <div class="bg-white rounded-2xl shadow-sm p-6">
+              <h2 class="text-lg font-bold mb-4">طريقة الدفع</h2>
+              <div class="space-y-3">
+                <label class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-primary transition has-[:checked]:border-primary has-[:checked]:bg-orange-50">
+                  <input type="radio" name="payment" value="cash" checked class="w-5 h-5 accent-primary" onchange="toggleCardFields()">
+                  <span class="text-2xl">💵</span>
+                  <span class="font-semibold text-sm">الدفع عند الاستلام</span>
+                </label>
+                <label class="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-primary transition has-[:checked]:border-primary has-[:checked]:bg-orange-50">
+                  <input type="radio" name="payment" value="card" class="w-5 h-5 accent-primary" onchange="toggleCardFields()">
+                  <span class="text-2xl">💳</span>
+                  <span class="font-semibold text-sm">بطاقة تجريبية</span>
+                </label>
+                <!-- حقول البطاقة -->
+                <div id="card-fields" class="hidden mt-4 p-4 bg-gray-50 rounded-xl space-y-3">
+                  <div>
+                    <label class="block text-xs font-semibold mb-1 text-gray-500">رقم البطاقة</label>
+                    <input type="text" value="**** **** **** 1234" disabled class="w-full px-4 py-2.5 rounded-lg border bg-gray-100 text-gray-500 text-sm" dir="ltr">
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold mb-1 text-gray-500">تاريخ الانتهاء</label>
+                      <input type="text" value="12/28" disabled class="w-full px-4 py-2.5 rounded-lg border bg-gray-100 text-gray-500 text-sm" dir="ltr">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold mb-1 text-gray-500">CVV</label>
+                      <input type="text" value="***" disabled class="w-full px-4 py-2.5 rounded-lg border bg-gray-100 text-gray-500 text-sm" dir="ltr">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ملخص الطلب -->
+          <div>
+            <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
+              <h2 class="text-lg font-bold mb-4">ملخص الطلب</h2>
+              <div id="checkout-items" class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                <!-- يتم ملؤها بالجافاسكربت -->
+              </div>
+              <div class="border-t border-gray-100 pt-4 space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">المجموع الفرعي</span>
+                  <span id="checkout-subtotal" class="font-semibold">0 ر.س</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">رسوم التوصيل</span>
+                  <span id="checkout-delivery" class="font-semibold">0 ر.س</span>
+                </div>
+                <div class="flex justify-between text-base font-bold border-t border-gray-100 pt-2">
+                  <span>الإجمالي</span>
+                  <span id="checkout-total" class="text-primary">0 ر.س</span>
+                </div>
+              </div>
+              <button onclick="confirmOrder()" class="w-full mt-6 bg-primary hover:bg-primary-dark text-white font-bold py-3.5 rounded-xl transition text-sm">
+                تأكيد الطلب ✓
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================== -->
+    <!-- 5. صفحة طلباتي -->
+    <!-- ======================================== -->
+    <section id="page-orders" class="page-section hidden">
+      <div class="max-w-5xl mx-auto px-4 py-6">
+        <h1 class="text-2xl font-black mb-6">طلباتي</h1>
+        <div id="orders-list" class="space-y-6">
+          <!-- يتم ملؤها بالجافاسكربت -->
+        </div>
+        <!-- حالة فارغة -->
+        <div id="orders-empty" class="hidden text-center py-20">
+          <div class="text-7xl mb-4">📋</div>
+          <h3 class="text-xl font-bold mb-2">لا توجد طلبات بعد</h3>
+          <p class="text-gray-500 mb-6">ابدأ بتصفح المطاعم واطلب وجبتك المفضلة</p>
+          <button onclick="navigateTo('home')" class="bg-primary hover:bg-primary-dark text-white font-bold px-8 py-3 rounded-xl transition">
+            تصفح المطاعم
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================================ -->
+  <!-- 3. سلة التسوق (لوحة منزلقة) -->
+  <!-- ============================================ -->
+  <div id="cart-overlay" class="cart-overlay fixed inset-0 bg-black/50 z-[60] hidden opacity-0" onclick="closeCart()"></div>
+  <div id="cart-panel" class="cart-panel fixed top-0 right-0 h-full w-full max-w-md bg-white z-[70] shadow-2xl transform translate-x-full flex flex-col">
+    <!-- رأس السلة -->
+    <div class="flex items-center justify-between p-5 border-b border-gray-100">
+      <h2 class="text-xl font-black">السلة</h2>
+      <button onclick="closeCart()" class="p-2 rounded-full hover:bg-gray-100 transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- محتوى السلة -->
+    <div id="cart-content" class="flex-1 overflow-y-auto p-5">
+      <!-- عناصر السلة - يتم ملؤها بالجافاسكربت -->
+    </div>
+
+    <!-- حالة السلة الفارغة -->
+    <div id="cart-empty" class="hidden flex-1 flex flex-col items-center justify-center p-5">
+      <div class="text-7xl mb-4">🛒</div>
+      <h3 class="text-xl font-bold mb-2">السلة فارغة</h3>
+      <p class="text-gray-500 mb-6 text-center">أضف بعض الوجبات اللذيذة من المطاعم</p>
+      <button onclick="closeCart(); navigateTo('home')" class="bg-primary hover:bg-primary-dark text-white font-bold px-8 py-3 rounded-xl transition">
+        تصفح المطاعم
+      </button>
+    </div>
+
+    <!-- تذييل السلة -->
+    <div id="cart-footer" class="hidden border-t border-gray-100 p-5 space-y-3 bg-white">
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500">المجموع الفرعي</span>
+        <span id="cart-subtotal" class="font-semibold">0 ر.س</span>
+      </div>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500">رسوم التوصيل</span>
+        <span id="cart-delivery-fee" class="font-semibold">10 ر.س</span>
+      </div>
+      <div class="flex justify-between font-bold text-lg border-t border-gray-100 pt-3">
+        <span>الإجمالي</span>
+        <span id="cart-total" class="text-primary">0 ر.س</span>
+      </div>
+      <button onclick="closeCart(); navigateTo('checkout')" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 rounded-xl transition text-sm">
+        إتمام الطلب
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- مودال نجاح الطلب -->
+  <!-- ============================================ -->
+  <div id="success-modal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform scale-95 transition-transform" id="success-modal-content">
+      <div class="text-6xl mb-4">🎉</div>
+      <h2 class="text-2xl font-black text-success mb-2">تم تأكيد طلبك!</h2>
+      <p class="text-gray-500 mb-2">رقم الطلب</p>
+      <p id="order-number-display" class="text-3xl font-black text-primary mb-4">#5678</p>
+      <p class="text-gray-500 text-sm mb-6">سيصلك طلبك خلال 30-45 دقيقة 🚗</p>
+      <div class="flex gap-3">
+        <button onclick="closeSuccessModal(); navigateTo('orders')" class="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition text-sm">
+          تتبع الطلب
+        </button>
+        <button onclick="closeSuccessModal(); navigateTo('home')" class="flex-1 border-2 border-primary text-primary font-bold py-3 rounded-xl transition text-sm hover:bg-orange-50">
+          الرئيسية
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- شريط التنقل السفلي (الجوال) -->
+  <!-- ============================================ -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
+    <div class="flex justify-around items-center h-16">
+      <button onclick="navigateTo('home')" class="bottom-nav-btn flex flex-col items-center gap-0.5 text-primary" data-page="home">
+        <i data-lucide="home" class="w-5 h-5"></i>
+        <span class="text-xs font-semibold">الرئيسية</span>
+      </button>
+      <button onclick="navigateTo('orders')" class="bottom-nav-btn flex flex-col items-center gap-0.5 text-gray-400" data-page="orders">
+        <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+        <span class="text-xs font-semibold">طلباتي</span>
+      </button>
+      <button onclick="openCart()" class="bottom-nav-btn relative flex flex-col items-center gap-0.5 text-gray-400" data-page="cart">
+        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+        <span class="text-xs font-semibold">السلة</span>
+        <span id="cart-badge-bottom" class="absolute -top-1 right-2 bg-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============================================ -->
+  <!-- جافاسكربت - البيانات والمنطق -->
+  <!-- ============================================ -->
+  <script>
+    // ==========================================
+    // بيانات المطاعم الوهمية
+    // ==========================================
+    const restaurants = [
+      {
+        id: 1,
+        name: 'برجر هاوس',
+        type: 'وجبات سريعة',
+        category: 'burger',
+        emoji: '🍔',
+        gradient: 'from-amber-400 to-orange-500',
+        rating: 4.8,
+        ratingCount: 234,
+        deliveryTime: '25-35',
+        deliveryFee: 0,
+        featured: true,
+        address: 'شارع الملك فهد، حي العليا، الرياض',
+        phone: '011-456-7890',
+        hours: 'يوميًا من 11:00 ص حتى 1:00 ص',
+        menu: [
+          { id: 101, name: 'برجر كلاسيك', desc: 'لحم بقري طازج مع خس وطماطم وجبنة شيدر', price: 32, emoji: '🍔', category: 'burger', bestseller: true },
+          { id: 102, name: 'برجر مزدوج', desc: 'طبقتان من اللحم مع صوص خاص وجبنة مزدوجة', price: 42, emoji: '🍔', category: 'burger', bestseller: true },
+          { id: 103, name: 'برجر دجاج مقرمش', desc: 'صدر دجاج مقرمش مع صلصة المايو الحارة', price: 28, emoji: '🍗', category: 'burger', bestseller: false },
+          { id: 104, name: 'برجر ماشروم', desc: 'لحم بقري مع فطر سوتيه وجبنة سويسرية', price: 38, emoji: '🍔', category: 'burger', bestseller: false },
+          { id: 105, name: 'ساندويتش كلوب', desc: 'دجاج مشوي مع بيض وخس وتيركي', price: 26, emoji: '🥙', category: 'sandwich', bestseller: false },
+          { id: 106, name: 'ساندويتش فيلادلفيا', desc: 'شرائح لحم مع فلفل وبصل وجبنة مذابة', price: 34, emoji: '🥙', category: 'sandwich', bestseller: true },
+          { id: 107, name: 'بطاطس مقرمشة', desc: 'بطاطس ذهبية مقرمشة مع صوص الثوم', price: 12, emoji: '🍟', category: 'appetizer', bestseller: false },
+          { id: 108, name: 'حلقات بصل', desc: 'حلقات بصل مقرمشة مع صوص الرانش', price: 14, emoji: '🧅', category: 'appetizer', bestseller: false },
+          { id: 109, name: 'ناجتس الدجاج', desc: '8 قطع دجاج مقرمشة مع صوصين', price: 22, emoji: '🍗', category: 'appetizer', bestseller: true },
+          { id: 110, name: 'كولا كبيرة', desc: 'مشروب غازي بارد', price: 8, emoji: '🥤', category: 'drink', bestseller: false },
+          { id: 111, name: 'عصير برتقال طازج', desc: 'عصير طبيعي 100%', price: 14, emoji: '🍊', category: 'drink', bestseller: false },
+          { id: 112, name: 'ميلك شيك شوكولاتة', desc: 'ميلك شيك كريمي بالشوكولاتة', price: 18, emoji: '🥛', category: 'drink', bestseller: false },
+        ]
+      },
+      {
+        id: 2,
+        name: 'بيتزا نابولي',
+        type: 'إيطالي',
+        category: 'pizza',
+        emoji: '🍕',
+        gradient: 'from-red-400 to-rose-500',
+        rating: 4.6,
+        ratingCount: 189,
+        deliveryTime: '30-40',
+        deliveryFee: 10,
+        featured: false,
+        address: 'شارع التحلية، حي السليمانية، الرياض',
+        phone: '011-234-5678',
+        hours: 'يوميًا من 12:00 م حتى 12:00 ص',
+        menu: [
+          { id: 201, name: 'بيتزا مارغريتا', desc: 'صلصة طماطم وجبنة موتزاريلا وريحان طازج', price: 35, emoji: '🍕', category: 'burger', bestseller: true },
+          { id: 202, name: 'بيتزا بيبروني', desc: 'شرائح بيبروني مع جبنة موتزاريلا', price: 40, emoji: '🍕', category: 'burger', bestseller: true },
+          { id: 203, name: 'بيتزا خضار', desc: 'فلفل وزيتون وفطر وبصل', price: 38, emoji: '🍕', category: 'burger', bestseller: false },
+          { id: 204, name: 'بيتزا باربكيو دجاج', desc: 'دجاج مشوي مع صلصة الباربكيو', price: 42, emoji: '🍕', category: 'burger', bestseller: false },
+          { id: 205, name: 'باستا ألفريدو', desc: 'باستا كريمية بالدجاج والبارميزان', price: 36, emoji: '🍝', category: 'sandwich', bestseller: true },
+          { id: 206, name: 'باستا بولونيز', desc: 'باستا مع صلصة اللحم الإيطالية', price: 34, emoji: '🍝', category: 'sandwich', bestseller: false },
+          { id: 207, name: 'سلطة سيزر', desc: 'خس روماني مع صلصة سيزر وخبز محمص', price: 22, emoji: '🥗', category: 'appetizer', bestseller: false },
+          { id: 208, name: 'خبز بالثوم', desc: 'خبز طازج بالثوم والأعشاب', price: 12, emoji: '🍞', category: 'appetizer', bestseller: false },
+          { id: 209, name: 'بروسكيتا', desc: 'خبز محمص مع طماطم وريحان', price: 18, emoji: '🥖', category: 'appetizer', bestseller: false },
+          { id: 210, name: 'تيراميسو', desc: 'حلى إيطالي كلاسيكي', price: 20, emoji: '🍰', category: 'drink', bestseller: true },
+          { id: 211, name: 'ليموناضة إيطالية', desc: 'ليموناضة طازجة بالنعناع', price: 12, emoji: '🍋', category: 'drink', bestseller: false },
+        ]
+      },
+      {
+        id: 3,
+        name: 'سوشي ماستر',
+        type: 'ياباني',
+        category: 'sushi',
+        emoji: '🍣',
+        gradient: 'from-teal-400 to-cyan-500',
+        rating: 4.9,
+        ratingCount: 156,
+        deliveryTime: '35-50',
+        deliveryFee: 15,
+        featured: true,
+        address: 'طريق الأمير محمد بن سلمان، حي حطين، الرياض',
+        phone: '011-789-0123',
+        hours: 'يوميًا من 1:00 م حتى 11:00 م',
+        menu: [
+          { id: 301, name: 'سلمون رول', desc: 'سوشي رول بالسلمون والأفوكادو', price: 45, emoji: '🍣', category: 'burger', bestseller: true },
+          { id: 302, name: 'تونا نيغيري', desc: 'شرائح تونا طازجة على أرز السوشي', price: 48, emoji: '🍣', category: 'burger', bestseller: true },
+          { id: 303, name: 'كاليفورنيا رول', desc: 'سلطعون وأفوكادو وخيار', price: 38, emoji: '🍣', category: 'burger', bestseller: false },
+          { id: 304, name: 'دراغون رول', desc: 'جمبري تمبورا مع أفوكادو وصوص', price: 55, emoji: '🍣', category: 'burger', bestseller: true },
+          { id: 305, name: 'رامن دجاج', desc: 'شوربة رامن يابانية مع دجاج ونودلز', price: 40, emoji: '🍜', category: 'sandwich', bestseller: false },
+          { id: 306, name: 'رامن لحم', desc: 'شوربة رامن غنية مع شرائح اللحم', price: 44, emoji: '🍜', category: 'sandwich', bestseller: false },
+          { id: 307, name: 'إدامامي', desc: 'فول الصويا المسلوق بالملح', price: 15, emoji: '🫛', category: 'appetizer', bestseller: false },
+          { id: 308, name: 'جيوزا', desc: 'زلابية يابانية مقلية', price: 22, emoji: '🥟', category: 'appetizer', bestseller: false },
+          { id: 309, name: 'ميسو سوب', desc: 'شوربة ميسو يابانية تقليدية', price: 12, emoji: '🍲', category: 'appetizer', bestseller: false },
+          { id: 310, name: 'شاي أخضر ياباني', desc: 'شاي ماتشا ساخن', price: 14, emoji: '🍵', category: 'drink', bestseller: false },
+          { id: 311, name: 'سموذي مانجو', desc: 'عصير مانجو طازج مثلج', price: 16, emoji: '🥭', category: 'drink', bestseller: false },
+        ]
+      },
+      {
+        id: 4,
+        name: 'حلويات الشام',
+        type: 'حلويات',
+        category: 'dessert',
+        emoji: '🍰',
+        gradient: 'from-pink-400 to-purple-500',
+        rating: 4.7,
+        ratingCount: 312,
+        deliveryTime: '20-30',
+        deliveryFee: 0,
+        featured: false,
+        address: 'شارع العروبة، حي الملز، الرياض',
+        phone: '011-321-6540',
+        hours: 'يوميًا من 9:00 ص حتى 11:00 م',
+        menu: [
+          { id: 401, name: 'كنافة نابلسية', desc: 'كنافة بالجبن مع قطر محلى', price: 25, emoji: '🧁', category: 'burger', bestseller: true },
+          { id: 402, name: 'بقلاوة مشكلة', desc: 'تشكيلة بقلاوة بالفستق والجوز', price: 30, emoji: '🍯', category: 'burger', bestseller: true },
+          { id: 403, name: 'تشيز كيك توت', desc: 'تشيز كيك كريمي بصوص التوت', price: 28, emoji: '🍰', category: 'burger', bestseller: false },
+          { id: 404, name: 'بان كيك بالنوتيلا', desc: 'بان كيك هش مع نوتيلا وفراولة', price: 22, emoji: '🥞', category: 'burger', bestseller: false },
+          { id: 405, name: 'وافل بلجيكي', desc: 'وافل مقرمش مع آيس كريم وكراميل', price: 26, emoji: '🧇', category: 'sandwich', bestseller: true },
+          { id: 406, name: 'كريب فراولة', desc: 'كريب فرنسي بالكريمة والفراولة', price: 20, emoji: '🫓', category: 'sandwich', bestseller: false },
+          { id: 407, name: 'آيس كريم 3 نكهات', desc: 'فانيلا وشوكولاتة وفراولة', price: 18, emoji: '🍨', category: 'appetizer', bestseller: false },
+          { id: 408, name: 'موس شوكولاتة', desc: 'موس شوكولاتة داكنة فاخرة', price: 24, emoji: '🍫', category: 'appetizer', bestseller: true },
+          { id: 409, name: 'قهوة تركية', desc: 'قهوة عربية مع هيل', price: 10, emoji: '☕', category: 'drink', bestseller: false },
+          { id: 410, name: 'شاي أخضر بالنعناع', desc: 'شاي أخضر طازج', price: 8, emoji: '🍵', category: 'drink', bestseller: false },
+          { id: 411, name: 'هوت شوكوليت', desc: 'شوكولاتة ساخنة كريمية', price: 16, emoji: '🍫', category: 'drink', bestseller: false },
+        ]
+      },
+      {
+        id: 5,
+        name: 'مشاوي الديرة',
+        type: 'مشويات',
+        category: 'grill',
+        emoji: '🥩',
+        gradient: 'from-yellow-500 to-red-500',
+        rating: 4.5,
+        ratingCount: 278,
+        deliveryTime: '35-45',
+        deliveryFee: 10,
+        featured: true,
+        address: 'طريق الملك عبدالعزيز، حي المرسلات، الرياض',
+        phone: '011-654-3210',
+        hours: 'يوميًا من 12:00 م حتى 2:00 ص',
+        menu: [
+          { id: 501, name: 'مشكل مشاوي كبير', desc: 'تشكيلة كباب وشقف وكفتة وريش', price: 85, emoji: '🥩', category: 'burger', bestseller: true },
+          { id: 502, name: 'كباب لحم', desc: 'كباب لحم غنم مشوي على الفحم', price: 45, emoji: '🥩', category: 'burger', bestseller: true },
+          { id: 503, name: 'شيش طاووق', desc: 'صدر دجاج متبل مشوي', price: 35, emoji: '🍗', category: 'burger', bestseller: false },
+          { id: 504, name: 'ريش غنم', desc: 'ريش غنم متبلة ومشوية على الفحم', price: 65, emoji: '🥩', category: 'burger', bestseller: true },
+          { id: 505, name: 'شاورما لحم', desc: 'شاورما لحم مع بصل وطماطم وطحينة', price: 22, emoji: '🌯', category: 'sandwich', bestseller: true },
+          { id: 506, name: 'شاورما دجاج', desc: 'شاورما دجاج مع ثومية وخضار', price: 18, emoji: '🌯', category: 'sandwich', bestseller: false },
+          { id: 507, name: 'حمص بالطحينة', desc: 'حمص كريمي مع زيت زيتون', price: 10, emoji: '🧆', category: 'appetizer', bestseller: false },
+          { id: 508, name: 'فتوش', desc: 'سلطة فتوش لبنانية مع خبز محمص', price: 14, emoji: '🥗', category: 'appetizer', bestseller: false },
+          { id: 509, name: 'تبولة', desc: 'سلطة تبولة بالبقدونس والبرغل', price: 12, emoji: '🥗', category: 'appetizer', bestseller: false },
+          { id: 510, name: 'عيران', desc: 'لبن مخيض بارد', price: 6, emoji: '🥛', category: 'drink', bestseller: false },
+          { id: 511, name: 'عصير رمان', desc: 'عصير رمان طبيعي 100%', price: 14, emoji: '🍹', category: 'drink', bestseller: false },
+        ]
+      },
+      {
+        id: 6,
+        name: 'بوكيه صحي',
+        type: 'أكل صحي',
+        category: 'healthy',
+        emoji: '🥗',
+        gradient: 'from-green-400 to-emerald-500',
+        rating: 4.4,
+        ratingCount: 145,
+        deliveryTime: '20-30',
+        deliveryFee: 0,
+        featured: false,
+        address: 'شارع الأمير سلطان، حي النزهة، جدة',
+        phone: '012-345-6789',
+        hours: 'يوميًا من 7:00 ص حتى 10:00 م',
+        menu: [
+          { id: 601, name: 'بوكيه دجاج مشوي', desc: 'دجاج مشوي مع كينوا وخضار طازجة', price: 38, emoji: '🥗', category: 'burger', bestseller: true },
+          { id: 602, name: 'بوكيه سلمون', desc: 'سلمون مشوي مع أرز بني وأفوكادو', price: 48, emoji: '🐟', category: 'burger', bestseller: true },
+          { id: 603, name: 'سلطة بروتين', desc: 'خضار متنوعة مع بيض وتونا وحمص', price: 32, emoji: '🥗', category: 'burger', bestseller: false },
+          { id: 604, name: 'بوكيه ستيك', desc: 'شرائح ستيك مع بطاطا حلوة وسبانخ', price: 52, emoji: '🥩', category: 'burger', bestseller: false },
+          { id: 605, name: 'راب دجاج صحي', desc: 'خبز صحي مع دجاج وخضار وصوص يوغرت', price: 26, emoji: '🌯', category: 'sandwich', bestseller: false },
+          { id: 606, name: 'راب فلافل', desc: 'فلافل مشوية مع خضار وطحينة', price: 22, emoji: '🧆', category: 'sandwich', bestseller: false },
+          { id: 607, name: 'شوربة عدس', desc: 'شوربة عدس صحية بالكمون', price: 14, emoji: '🍲', category: 'appetizer', bestseller: false },
+          { id: 608, name: 'خضار مشوية', desc: 'تشكيلة خضار مشوية بالأعشاب', price: 18, emoji: '🫑', category: 'appetizer', bestseller: false },
+          { id: 609, name: 'سموذي أخضر', desc: 'سبانخ وموز وتفاح وزنجبيل', price: 18, emoji: '🥤', category: 'drink', bestseller: true },
+          { id: 610, name: 'عصير ديتوكس', desc: 'برتقال وجزر وليمون وزنجبيل', price: 16, emoji: '🍊', category: 'drink', bestseller: false },
+        ]
+      }
+    ];
+
+    // ==========================================
+    // بيانات التقييمات الوهمية
+    // ==========================================
+    const reviews = [
+      { name: 'محمد العتيبي', rating: 5, date: 'منذ يومين', comment: 'أفضل طلب جربته! الأكل طازج وحار والتوصيل سريع جدًا. بكل تأكيد سأطلب مرة ثانية 👌' },
+      { name: 'سارة الشمري', rating: 4, date: 'منذ أسبوع', comment: 'الطعم ممتاز والكمية مناسبة. فقط التوصيل تأخر شوي لكن يستاهل الانتظار!' },
+      { name: 'عبدالله القحطاني', rating: 5, date: 'منذ 3 أيام', comment: 'ما شاء الله لذيذ جدًا! الصوص رهيب والخبز طازج. أنصح الكل يجرب 🔥' },
+      { name: 'نورة الدوسري', rating: 4, date: 'منذ أسبوعين', comment: 'تجربة جيدة جدًا. التغليف نظيف والأكل وصل ساخن. أتمنى يضيفون أصناف جديدة.' },
+      { name: 'فهد المطيري', rating: 5, date: 'منذ 5 أيام', comment: 'صراحة من أفضل المطاعم اللي جربتها. الجودة عالية والأسعار معقولة 💯' },
+    ];
+
+    // ==========================================
+    // بيانات الطلبات الوهمية
+    // ==========================================
+    let orders = [
+      {
+        id: '#1234',
+        restaurantName: 'برجر هاوس',
+        emoji: '🍔',
+        date: '2024/03/15 - 8:30 م',
+        items: ['برجر كلاسيك × 2', 'بطاطس مقرمشة × 1', 'كولا × 2'],
+        total: 84,
+        status: 3 // تم التوصيل
+      },
+      {
+        id: '#1235',
+        restaurantName: 'سوشي ماستر',
+        emoji: '🍣',
+        date: '2024/03/18 - 7:00 م',
+        items: ['سلمون رول × 1', 'دراغون رول × 1', 'شاي أخضر × 2'],
+        total: 128,
+        status: 2 // في الطريق
+      },
+      {
+        id: '#1236',
+        restaurantName: 'مشاوي الديرة',
+        emoji: '🥩',
+        date: '2024/03/20 - 9:15 م',
+        items: ['مشكل مشاوي كبير × 1', 'حمص × 2', 'عيران × 3'],
+        total: 123,
+        status: 1 // قيد التحضير
+      },
+      {
+        id: '#1237',
+        restaurantName: 'حلويات الشام',
+        emoji: '🍰',
+        date: '2024/03/21 - 4:00 م',
+        items: ['كنافة نابلسية × 1', 'بقلاوة مشكلة × 1', 'قهوة تركية × 2'],
+        total: 75,
+        status: 0 // تم الطلب
+      }
+    ];
+
+    // ==========================================
+    // حالة السلة
+    // ==========================================
+    let cart = [];
+    let currentRestaurant = null;
+    let activeFilters = new Set();
+    let activeCategory = 'all';
+
+    // ==========================================
+    // دوال التنقل
+    // ==========================================
+    function navigateTo(page) {
+      // إظهار شاشة التحميل
+      showLoading();
+
+      setTimeout(() => {
+        // إخفاء جميع الصفحات
+        document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+        
+        // إخفاء شاشة التحميل
+        hideLoading();
+
+        // إظهار الصفحة المطلوبة
+        const target = document.getElementById('page-' + page);
+        if (target) {
+          target.classList.remove('hidden');
+          target.style.opacity = '0';
+          requestAnimationFrame(() => { target.style.opacity = '1'; });
+        }
+
+        // تحديث شريط التنقل السفلي
+        document.querySelectorAll('.bottom-nav-btn').forEach(btn => {
+          btn.classList.remove('text-primary');
+          btn.classList.add('text-gray-400');
+        });
+        const activeBtn = document.querySelector(`.bottom-nav-btn[data-page="${page}"]`);
+        if (activeBtn) {
+          activeBtn.classList.add('text-primary');
+          activeBtn.classList.remove('text-gray-400');
+        }
+
+        // إعادة تهيئة الأيقونات
+        lucide.createIcons();
+
+        // تنفيذ إجراءات خاصة بالصفحات
+        if (page === 'home') renderRestaurants();
+        if (page === 'orders') renderOrders();
+        if (page === 'checkout') renderCheckout();
+
+        // التمرير للأعلى
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 400);
+    }
+
+    function showLoading() {
+      document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('loading-skeleton').classList.remove('hidden');
+    }
+
+    function hideLoading() {
+      document.getElementById('loading-skeleton').classList.add('hidden');
+    }
+
+    function focusSearch() {
+      navigateTo('home');
+      setTimeout(() => document.getElementById('main-search')?.focus(), 500);
+    }
+
+    // ==========================================
+    // عرض المطاعم
+    // ==========================================
+    function renderRestaurants() {
+      const grid = document.getElementById('restaurants-grid');
+      const searchTerm = document.getElementById('main-search')?.value?.trim().toLowerCase() || '';
+
+      let filtered = restaurants.filter(r => {
+        // فلتر البحث
+        if (searchTerm && !r.name.includes(searchTerm) && !r.type.includes(searchTerm)) return false;
+        // فلتر التصنيف
+        if (activeCategory !== 'all' && r.category !== activeCategory) return false;
+        // فلاتر إضافية
+        if (activeFilters.has('top-rated') && r.rating < 4.7) return false;
+        if (activeFilters.has('fastest') && parseInt(r.deliveryTime) > 30) return false;
+        if (activeFilters.has('free-delivery') && r.deliveryFee > 0) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        document.getElementById('no-results').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('no-results').classList.add('hidden');
+
+      grid.innerHTML = filtered.map(r => `
+        <div class="restaurant-card bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer border border-gray-50" onclick="openRestaurant(${r.id})">
+          <!-- صورة المطعم -->
+          <div class="relative h-40 bg-gradient-to-l ${r.gradient} flex items-center justify-center">
+            <span class="text-7xl">${r.emoji}</span>
+            ${r.featured ? '<span class="absolute top-3 right-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">⭐ مميز</span>' : ''}
+            ${r.deliveryFee === 0 ? '<span class="absolute top-3 left-3 bg-success text-white text-xs font-bold px-3 py-1 rounded-full">توصيل مجاني</span>' : ''}
+          </div>
+          <!-- معلومات المطعم -->
+          <div class="p-4">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h3 class="font-bold text-lg">${r.name}</h3>
+                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">${r.type}</span>
+              </div>
+              <div class="flex items-center gap-1 text-sm font-semibold bg-orange-50 px-2 py-1 rounded-lg">
+                <span>⭐</span>
+                <span>${r.rating}</span>
+                <span class="text-gray-400 text-xs">(${r.ratingCount})</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-4 text-sm text-gray-500">
+              <span class="flex items-center gap-1">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                ${r.deliveryTime} دقيقة
+              </span>
+              <span class="flex items-center gap-1">
+                <i data-lucide="truck" class="w-3.5 h-3.5"></i>
+                ${r.deliveryFee === 0 ? 'مجاني' : r.deliveryFee + ' ر.س'}
+              </span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function filterByCategory(cat) {
+      activeCategory = cat;
+      document.querySelectorAll('.category-chip:not(.menu-cat-chip)').forEach(chip => {
+        chip.classList.remove('active', 'bg-primary', 'text-white');
+        chip.classList.add('bg-white');
+      });
+      const activeChip = document.querySelector(`.category-chip[data-cat="${cat}"]:not(.menu-cat-chip)`);
+      if (activeChip) {
+        activeChip.classList.add('active', 'bg-primary', 'text-white');
+        activeChip.classList.remove('bg-white');
+      }
+      renderRestaurants();
+    }
+
+    function toggleFilter(btn, filter) {
+      if (activeFilters.has(filter)) {
+        activeFilters.delete(filter);
+        btn.classList.remove('active');
+      } else {
+        activeFilters.add(filter);
+        btn.classList.add('active');
+      }
+      renderRestaurants();
+    }
+
+    function filterRestaurants() {
+      renderRestaurants();
+    }
+
+    // ==========================================
+    // صفحة المطعم
+    // ==========================================
+    function openRestaurant(id) {
+      currentRestaurant = restaurants.find(r => r.id === id);
+      if (!currentRestaurant) return;
+
+      showLoading();
+      setTimeout(() => {
+        hideLoading();
+        document.querySelectorAll('.page-section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('page-restaurant').classList.remove('hidden');
+
+        // تحديث الغطاء
+        document.getElementById('restaurant-cover').innerHTML = `
+          <div class="absolute inset-0 bg-gradient-to-l ${currentRestaurant.gradient}"></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <span class="text-[120px] opacity-30">${currentRestaurant.emoji}</span>
+          </div>
+        `;
+
+        // تحديث بطاقة المعلومات
+        document.getElementById('restaurant-info-card').innerHTML = `
+          <div class="flex items-start justify-between">
+            <div>
+              <h1 class="text-2xl font-black mb-1">${currentRestaurant.name}</h1>
+              <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">${currentRestaurant.type}</span>
+            </div>
+            <div class="flex items-center gap-1 bg-orange-50 px-3 py-1.5 rounded-xl font-bold">
+              <span>⭐</span>
+              <span>${currentRestaurant.rating}</span>
+              <span class="text-gray-400 text-sm font-normal">(${currentRestaurant.ratingCount})</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-6 mt-4 text-sm text-gray-500">
+            <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-4 h-4 text-primary"></i> ${currentRestaurant.deliveryTime} دقيقة</span>
+            <span class="flex items-center gap-1.5"><i data-lucide="truck" class="w-4 h-4 text-primary"></i> ${currentRestaurant.deliveryFee === 0 ? '<span class="text-success font-semibold">توصيل مجاني</span>' : currentRestaurant.deliveryFee + ' ر.س توصيل'}</span>
+          </div>
+        `;
+
+        // تعيين التبويب الافتراضي
+        switchTab('menu');
+        filterMenu('all');
+
+        // عرض المعلومات
+        renderRestaurantDetails();
+        // عرض التقييمات
+        renderReviews();
+
+        lucide.createIcons();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 400);
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-primary', 'border-primary');
+        btn.classList.add('text-gray-500', 'border-transparent');
+      });
+      const activeBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'text-primary', 'border-primary');
+        activeBtn.classList.remove('text-gray-500', 'border-transparent');
+      }
+
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById('tab-' + tab)?.classList.remove('hidden');
+    }
+
+    function filterMenu(cat) {
+      if (!currentRestaurant) return;
+
+      // تحديث الشرائح
+      document.querySelectorAll('.menu-cat-chip').forEach(chip => {
+        chip.classList.remove('active', 'bg-primary', 'text-white');
+        chip.classList.add('bg-white');
+      });
+      const activeChip = document.querySelector(`.menu-cat-chip[data-mcat="${cat}"]`);
+      if (activeChip) {
+        activeChip.classList.add('active', 'bg-primary', 'text-white');
+        activeChip.classList.remove('bg-white');
+      }
+
+      let items = currentRestaurant.menu;
+      if (cat === 'bestseller') {
+        items = items.filter(i => i.bestseller);
+      } else if (cat !== 'all') {
+        items = items.filter(i => i.category === cat);
+      }
+
+      renderMenuItems(items);
+    }
+
+    function renderMenuItems(items) {
+      const grid = document.getElementById('menu-items-grid');
+      grid.innerHTML = items.map(item => {
+        const inCart = cart.find(c => c.id === item.id);
+        const qty = inCart ? inCart.quantity : 0;
+
+        return `
+          <div class="menu-item-card bg-white rounded-2xl shadow-sm border border-gray-50 p-4 flex gap-4">
+            <div class="w-20 h-20 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center flex-shrink-0">
+              <span class="text-4xl">${item.emoji}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <h3 class="font-bold text-sm truncate">${item.name}</h3>
+                  ${item.bestseller ? '<span class="text-[10px] text-primary font-bold">🔥 الأكثر مبيعًا</span>' : ''}
+                </div>
+              </div>
+              <p class="text-xs text-gray-500 mt-1 line-clamp-2">${item.desc}</p>
+              <div class="flex items-center justify-between mt-3">
+                <span class="font-black text-primary text-sm">${item.price} ر.س</span>
+                ${qty > 0 ? `
+                  <div class="flex items-center gap-2">
+                    <button onclick="updateCartQty(${item.id}, -1)" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition text-lg font-bold">−</button>
+                    <span class="font-bold text-sm w-6 text-center">${qty}</span>
+                    <button onclick="updateCartQty(${item.id}, 1)" class="w-8 h-8 rounded-full bg-primary hover:bg-primary-dark text-white flex items-center justify-center transition text-lg font-bold">+</button>
+                  </div>
+                ` : `
+                  <button onclick="addToCart(${item.id})" class="w-8 h-8 rounded-full bg-primary hover:bg-primary-dark text-white flex items-center justify-center transition text-lg font-bold">+</button>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderReviews() {
+      const list = document.getElementById('reviews-list');
+      list.innerHTML = reviews.map(r => `
+        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-50">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-amber-400 flex items-center justify-center text-white font-bold text-sm">
+                ${r.name.charAt(0)}
+              </div>
+              <div>
+                <h4 class="font-bold text-sm">${r.name}</h4>
+                <span class="text-xs text-gray-400">${r.date}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-0.5">
+              ${'⭐'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
+            </div>
+          </div>
+          <p class="text-sm text-gray-600 leading-relaxed">${r.comment}</p>
+        </div>
+      `).join('');
+    }
+
+    function renderRestaurantDetails() {
+      if (!currentRestaurant) return;
+      document.getElementById('restaurant-details').innerHTML = `
+        <div class="space-y-5">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="map-pin" class="w-5 h-5 text-primary"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm mb-1">العنوان</h4>
+              <p class="text-sm text-gray-500">${currentRestaurant.address}</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="phone" class="w-5 h-5 text-primary"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm mb-1">رقم الهاتف</h4>
+              <p class="text-sm text-gray-500" dir="ltr">${currentRestaurant.phone}</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="clock" class="w-5 h-5 text-primary"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm mb-1">ساعات العمل</h4>
+              <p class="text-sm text-gray-500">${currentRestaurant.hours}</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="truck" class="w-5 h-5 text-primary"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-sm mb-1">معلومات التوصيل</h4>
+              <p class="text-sm text-gray-500">وقت التوصيل: ${currentRestaurant.deliveryTime} دقيقة</p>
+              <p class="text-sm text-gray-500">رسوم التوصيل: ${currentRestaurant.deliveryFee === 0 ? 'مجاني' : currentRestaurant.deliveryFee + ' ر.س'}</p>
+              <p class="text-sm text-gray-500">الحد الأدنى للطلب: 20 ر.س</p>
+            </div>
+          </div>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // إدارة السلة
+    // ==========================================
+    function addToCart(itemId) {
+      if (!currentRestaurant) return;
+      const item = currentRestaurant.menu.find(i => i.id === itemId);
+      if (!item) return;
+
+      const existing = cart.find(c => c.id === itemId);
+      if (existing) {
+        existing.quantity++;
+      } else {
+        cart.push({
+          id: item.id,
+          name: item.name,
+          emoji: item.emoji,
+          price: item.price,
+          quantity: 1,
+          restaurantId: currentRestaurant.id,
+          restaurantName: currentRestaurant.name
+        });
+      }
+
+      updateCartBadge();
+      showToast('تمت الإضافة إلى السلة ✓', 'success');
+
+      // إعادة عرض المنيو
+      if (currentRestaurant) {
+        const activeMcat = document.querySelector('.menu-cat-chip.active')?.dataset?.mcat || 'all';
+        filterMenu(activeMcat);
+      }
+    }
+
+    function updateCartQty(itemId, delta) {
+      const item = cart.find(c => c.id === itemId);
+      if (!item) return;
+
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        cart = cart.filter(c => c.id !== itemId);
+      }
+
+      updateCartBadge();
+      renderCartPanel();
+
+      // إعادة عرض المنيو إذا كنا في صفحة المطعم
+      if (currentRestaurant && !document.getElementById('page-restaurant').classList.contains('hidden')) {
+        const activeMcat = document.querySelector('.menu-cat-chip.active')?.dataset?.mcat || 'all';
+        filterMenu(activeMcat);
+      }
+    }
+
+    function removeFromCart(itemId) {
+      cart = cart.filter(c => c.id !== itemId);
+      updateCartBadge();
+      renderCartPanel();
+      showToast('تم حذف العنصر من السلة', 'info');
+
+      if (currentRestaurant && !document.getElementById('page-restaurant').classList.contains('hidden')) {
+        const activeMcat = document.querySelector('.menu-cat-chip.active')?.dataset?.mcat || 'all';
+        filterMenu(activeMcat);
+      }
+    }
+
+    function updateCartBadge() {
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const badges = [document.getElementById('cart-badge'), document.getElementById('cart-badge-bottom')];
+      badges.forEach(badge => {
+        if (badge) {
+          if (totalItems > 0) {
+            badge.textContent = totalItems;
+            badge.classList.remove('hidden');
+          } else {
+            badge.classList.add('hidden');
+          }
+        }
+      });
+    }
+
+    function getCartSubtotal() {
+      return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+
+    function getCartDeliveryFee() {
+      if (cart.length === 0) return 0;
+      const restId = cart[0]?.restaurantId;
+      const rest = restaurants.find(r => r.id === restId);
+      return rest ? rest.deliveryFee : 10;
+    }
+
+    function openCart() {
+      renderCartPanel();
+      const overlay = document.getElementById('cart-overlay');
+      const panel = document.getElementById('cart-panel');
+      overlay.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        panel.style.transform = 'translateX(0)';
+      });
+    }
+
+    function closeCart() {
+      const overlay = document.getElementById('cart-overlay');
+      const panel = document.getElementById('cart-panel');
+      overlay.style.opacity = '0';
+      panel.style.transform = 'translateX(100%)';
+      setTimeout(() => overlay.classList.add('hidden'), 300);
+    }
+
+    function renderCartPanel() {
+      const content = document.getElementById('cart-content');
+      const empty = document.getElementById('cart-empty');
+      const footer = document.getElementById('cart-footer');
+
+      if (cart.length === 0) {
+        content.classList.add('hidden');
+        empty.classList.remove('hidden');
+        footer.classList.add('hidden');
+        return;
+      }
+
+      content.classList.remove('hidden');
+      empty.classList.add('hidden');
+      footer.classList.remove('hidden');
+
+      content.innerHTML = cart.map(item => `
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl mb-3">
+          <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center flex-shrink-0">
+            <span class="text-2xl">${item.emoji}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="font-bold text-sm truncate">${item.name}</h4>
+            <p class="text-primary font-bold text-sm">${item.price} ر.س</p>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button onclick="updateCartQty(${item.id}, -1)" class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition text-sm font-bold">−</button>
+            <span class="font-bold text-sm w-5 text-center">${item.quantity}</span>
+            <button onclick="updateCartQty(${item.id}, 1)" class="w-7 h-7 rounded-full bg-primary hover:bg-primary-dark text-white flex items-center justify-center transition text-sm font-bold">+</button>
+          </div>
+          <button onclick="removeFromCart(${item.id})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition flex-shrink-0">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+
+      const subtotal = getCartSubtotal();
+      const deliveryFee = getCartDeliveryFee();
+      document.getElementById('cart-subtotal').textContent = subtotal + ' ر.س';
+      document.getElementById('cart-delivery-fee').textContent = deliveryFee === 0 ? 'مجاني' : deliveryFee + ' ر.س';
+      document.getElementById('cart-total').textContent = (subtotal + deliveryFee) + ' ر.س';
+
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // صفحة إتمام الطلب
+    // ==========================================
+    function renderCheckout() {
+      if (cart.length === 0) {
+        navigateTo('home');
+        showToast('السلة فارغة! أضف عناصر أولاً', 'error');
+        return;
+      }
+
+      const itemsContainer = document.getElementById('checkout-items');
+      itemsContainer.innerHTML = cart.map(item => `
+        <div class="flex items-center justify-between text-sm">
+          <div class="flex items-center gap-2 min-w-0">
+            <span>${item.emoji}</span>
+            <span class="truncate">${item.name}</span>
+            <span class="text-gray-400">×${item.quantity}</span>
+          </div>
+          <span class="font-semibold flex-shrink-0">${item.price * item.quantity} ر.س</span>
+        </div>
+      `).join('');
+
+      const subtotal = getCartSubtotal();
+      const deliveryFee = getCartDeliveryFee();
+      document.getElementById('checkout-subtotal').textContent = subtotal + ' ر.س';
+      document.getElementById('checkout-delivery').textContent = deliveryFee === 0 ? 'مجاني' : deliveryFee + ' ر.س';
+      document.getElementById('checkout-total').textContent = (subtotal + deliveryFee) + ' ر.س';
+    }
+
+    function toggleCardFields() {
+      const cardRadio = document.querySelector('input[name="payment"][value="card"]');
+      const fields = document.getElementById('card-fields');
+      if (cardRadio.checked) {
+        fields.classList.remove('hidden');
+      } else {
+        fields.classList.add('hidden');
+      }
+    }
+
+    function confirmOrder() {
+      // التحقق من الحقول
+      let hasError = false;
+
+      const name = document.getElementById('checkout-name');
+      const phone = document.getElementById('checkout-phone');
+      const address = document.getElementById('checkout-address');
+
+      // إعادة تعيين الأخطاء
+      [name, phone, address].forEach(el => {
+        el.classList.remove('border-error');
+        el.classList.add('border-gray-200');
+      });
+      document.querySelectorAll('[id^="error-"]').forEach(el => el.classList.add('hidden'));
+
+      if (!name.value.trim()) {
+        name.classList.remove('border-gray-200');
+        name.classList.add('border-error');
+        document.getElementById('error-name').classList.remove('hidden');
+        hasError = true;
+      }
+
+      const phoneRegex = /^05\d{8}$/;
+      if (!phoneRegex.test(phone.value.trim())) {
+        phone.classList.remove('border-gray-200');
+        phone.classList.add('border-error');
+        document.getElementById('error-phone').classList.remove('hidden');
+        hasError = true;
+      }
+
+      if (!address.value.trim()) {
+        address.classList.remove('border-gray-200');
+        address.classList.add('border-error');
+        document.getElementById('error-address').classList.remove('hidden');
+        hasError = true;
+      }
+
+      if (hasError) {
+        showToast('يرجى تعبئة جميع الحقول المطلوبة', 'error');
+        return;
+      }
+
+      // إنشاء رقم طلب عشوائي
+      const orderNum = '#' + (Math.floor(Math.random() * 9000) + 1000);
+      document.getElementById('order-number-display').textContent = orderNum;
+
+      // إضافة الطلب إلى القائمة
+      orders.unshift({
+        id: orderNum,
+        restaurantName: cart[0]?.restaurantName || 'مطعم',
+        emoji: cart[0]?.emoji || '🍽️',
+        date: new Date().toLocaleDateString('ar-SA') + ' - ' + new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
+        items: cart.map(c => `${c.name} × ${c.quantity}`),
+        total: getCartSubtotal() + getCartDeliveryFee(),
+        status: 0
+      });
+
+      // تفريغ السلة
+      cart = [];
+      updateCartBadge();
+
+      // إعادة تعيين النموذج
+      name.value = '';
+      phone.value = '';
+      address.value = '';
+      document.getElementById('checkout-notes').value = '';
+
+      // إظهار مودال النجاح مع القصاصات
+      showSuccessModal();
+      launchConfetti();
+    }
+
+    function showSuccessModal() {
+      const modal = document.getElementById('success-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => {
+        document.getElementById('success-modal-content').style.transform = 'scale(1)';
+      }, 50);
+    }
+
+    function closeSuccessModal() {
+      const modal = document.getElementById('success-modal');
+      document.getElementById('success-modal-content').style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }, 200);
+    }
+
+    function launchConfetti() {
+      const colors = ['#F97316', '#16A34A', '#3B82F6', '#EF4444', '#8B5CF6', '#F59E0B', '#EC4899'];
+      for (let i = 0; i < 60; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 1 + 's';
+        piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        piece.style.width = (Math.random() * 8 + 6) + 'px';
+        piece.style.height = (Math.random() * 8 + 6) + 'px';
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+      }
+    }
+
+    // ==========================================
+    // صفحة طلباتي
+    // ==========================================
+    function renderOrders() {
+      const list = document.getElementById('orders-list');
+      const empty = document.getElementById('orders-empty');
+
+      if (orders.length === 0) {
+        list.classList.add('hidden');
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      list.classList.remove('hidden');
+      empty.classList.add('hidden');
+
+      const statusLabels = ['تم الطلب', 'قيد التحضير', 'في الطريق', 'تم التوصيل'];
+      const statusIcons = ['📋', '👨‍🍳', '🚗', '✅'];
+
+      list.innerHTML = orders.map(order => `
+        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-50">
+          <!-- رأس الطلب -->
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
+                <span class="text-2xl">${order.emoji}</span>
+              </div>
+              <div>
+                <h3 class="font-bold">${order.restaurantName}</h3>
+                <p class="text-xs text-gray-400">${order.date}</p>
+              </div>
+            </div>
+            <div>
+              <span class="text-sm font-bold text-primary">${order.id}</span>
+              <div class="text-xs text-gray-400 mt-0.5">${order.total} ر.س</div>
+            </div>
+          </div>
+
+          <!-- العناصر -->
+          <div class="bg-gray-50 rounded-xl p-3 mb-4">
+            ${order.items.map(item => `<p class="text-sm text-gray-600">• ${item}</p>`).join('')}
+          </div>
+
+          <!-- شريط التقدم -->
+          <div class="relative">
+            <div class="flex justify-between mb-2">
+              ${statusLabels.map((label, idx) => `
+                <div class="flex flex-col items-center flex-1">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1 ${idx <= order.status ? 'bg-primary text-white' : 'bg-gray-200 text-gray-400'}">
+                    ${statusIcons[idx]}
+                  </div>
+                  <span class="text-[10px] font-semibold text-center ${idx <= order.status ? 'text-primary' : 'text-gray-400'}">${label}</span>
+                </div>
+              `).join('')}
+            </div>
+            <!-- خط التقدم -->
+            <div class="absolute top-4 right-[16.6%] left-[16.6%] h-0.5 bg-gray-200 -z-0">
+              <div class="h-full bg-primary transition-all" style="width: ${(order.status / 3) * 100}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==========================================
+    // التوست (الإشعارات)
+    // ==========================================
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const bgColors = {
+        success: 'bg-success',
+        error: 'bg-error',
+        info: 'bg-blue-500'
+      };
+
+      const icons = {
+        success: '✓',
+        error: '✕',
+        info: 'ℹ'
+      };
+
+      toast.className = `toast-enter flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-white font-semibold text-sm ${bgColors[type] || bgColors.success}`;
+      toast.innerHTML = `<span class="text-lg">${icons[type] || icons.success}</span> ${message}`;
+      
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('toast-enter');
+        toast.classList.add('toast-exit');
+        setTimeout(() => toast.remove(), 400);
+      }, 2500);
+    }
+
+    // ==========================================
+    // التهيئة عند تحميل الصفحة
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderRestaurants();
+      updateCartBadge();
+    });
+  </script>
+</body>
+</html>
