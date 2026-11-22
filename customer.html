@@ -41,8 +41,25 @@
       overflow-x: hidden;
       width: 100%;
       position: relative;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
     body { background-color: #FFFAF6; color: #1C1917; }
+
+    /* الوضع الليلي - Dark Mode */
+    html.dark body { background-color: #0b0f19; color: #f1f5f9; }
+    html.dark nav { background-color: rgba(17, 24, 39, 0.95) !important; border-color: #1f2937 !important; }
+    html.dark .bg-white { background-color: #111827 !important; color: #f1f5f9 !important; }
+    html.dark .bg-bg { background-color: #0b0f19 !important; }
+    html.dark .border-stone-100, html.dark .border-gray-50, html.dark .border-gray-100, html.dark .border-gray-200, html.dark .border-orange-100, html.dark .border-orange-200 { border-color: #1f2937 !important; }
+    html.dark .text-text { color: #f1f5f9 !important; }
+    html.dark .text-gray-500, html.dark .text-stone-500, html.dark .text-stone-600, html.dark .text-gray-400 { color: #9ca3af !important; }
+    html.dark .bg-gray-50, html.dark .bg-stone-50, html.dark .bg-stone-100, html.dark .bg-orange-50 { background-color: #1f2937 !important; }
+    html.dark .restaurant-card { background-color: #111827 !important; border-color: #1f2937 !important; box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; }
+    html.dark .menu-item-card { background-color: #111827 !important; border-color: #1f2937 !important; }
+    html.dark .filter-btn:not(.active), html.dark .category-chip:not(.active) { background-color: #111827 !important; color: #e2e8f0 !important; border-color: #374151 !important; }
+    html.dark .cart-panel, html.dark #success-modal > div, html.dark .modal-content-box { background-color: #111827 !important; color: #f1f5f9 !important; border: 1px solid #1f2937 !important; }
+    html.dark input, html.dark textarea { background-color: #1f2937 !important; color: #fff !important; border-color: #374151 !important; }
+    html.dark input::placeholder, html.dark textarea::placeholder { color: #6b7280 !important; }
 
     /* إخفاء شريط التمرير الأفقي للتصنيفات */
     .hide-scrollbar::-webkit-scrollbar { display: none; }
@@ -54,6 +71,10 @@
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
       border-radius: 12px;
+    }
+    html.dark .skeleton {
+      background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+      background-size: 200% 100%;
     }
     @keyframes shimmer {
       0% { background-position: 200% 0; }
@@ -98,9 +119,46 @@
     .progress-step { transition: all 0.3s ease; }
 
     /* زر نشط */
-    .filter-btn.active { background-color: #F97316; color: white; }
-    .category-chip.active { background-color: #F97316; color: white; border-color: #F97316; }
+    .filter-btn.active { background-color: #F97316; color: white; border-color: #F97316 !important; }
+    .category-chip.active { background-color: #F97316; color: white; border-color: #F97316 !important; }
     .tab-btn.active { color: #F97316; border-bottom-color: #F97316; }
+
+    /* توهج النبض للزر الإبداعي */
+    .pulse-glow {
+      animation: pulseGlow 2.5s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); transform: scale(1); }
+      50% { box-shadow: 0 0 0 12px rgba(249, 115, 22, 0); transform: scale(1.03); }
+    }
+
+    /* أنيميشن المفضلة القلب */
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    .heart-pop { animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    /* أنيميشن الدراجة النارية */
+    @keyframes scooterBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .scooter-animated {
+      animation: scooterBounce 0.6s infinite ease-in-out;
+    }
+
+    /* مؤشر الكتابة في الشات */
+    .typing-dot {
+      animation: typingAnimation 1.4s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typingAnimation {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
   </style>
 </head>
 <body class="font-cairo min-h-screen bg-bg">
@@ -121,15 +179,26 @@
       </a>
 
       <!-- روابط سطح المكتب -->
-      <div class="hidden md:flex items-center gap-6">
+      <div class="hidden md:flex items-center gap-4 lg:gap-6">
         <a href="#" onclick="navigateTo('home')" class="text-sm font-semibold text-text hover:text-primary transition">الرئيسية</a>
         <a href="#" onclick="navigateTo('orders')" class="text-sm font-semibold text-text hover:text-primary transition">طلباتي</a>
+        <button onclick="openRouletteModal()" class="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl transition shadow-xs">
+          <span>🎲 عجلة الحظ</span>
+        </button>
+        <button onclick="openGroupOrderModal()" class="flex items-center gap-1.5 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-xl transition shadow-xs">
+          <span>👥 طلب جماعي</span>
+        </button>
         <a href="restaurant-admin.html" class="text-xs font-semibold text-stone-600 hover:text-primary transition bg-stone-100 hover:bg-orange-50 px-3 py-1.5 rounded-xl">لوحة المطعم 🍽️</a>
         <a href="super-admin.html" class="text-xs font-semibold text-stone-600 hover:text-blue-600 transition bg-stone-100 hover:bg-blue-50 px-3 py-1.5 rounded-xl">لوحة الأدمن 🛡️</a>
       </div>
 
-      <!-- أيقونات وأزرار الجوال -->
-      <div class="flex items-center gap-1.5 sm:gap-2">
+      <!-- أيقونات وأزرار الجوال وسطح المكتب -->
+      <div class="flex items-center gap-1 sm:gap-2">
+        <!-- زر الوضع الليلي -->
+        <button onclick="toggleDarkMode()" id="dark-mode-toggle" class="p-2 rounded-xl hover:bg-orange-50 transition text-stone-700 dark:text-stone-300" title="تبديل الوضع الليلي">
+          <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+          <i data-lucide="sun" class="w-5 h-5 hidden dark:block text-amber-400"></i>
+        </button>
         <a href="index.html" class="flex items-center gap-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-orange-100 px-2.5 py-1.5 rounded-xl transition" title="بوابة اختيار الأدوار">
           <span>الأدوار</span>
           <span class="text-xs">🔄</span>
@@ -188,16 +257,74 @@
               oninput="filterRestaurants()">
             <i data-lucide="search" class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
           </div>
+
+          <!-- أزرار تفاعلية ممتعة في البطل -->
+          <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <button onclick="openRouletteModal()" class="pulse-glow inline-flex items-center gap-2 bg-white text-orange-600 hover:bg-orange-50 font-black text-xs sm:text-sm px-5 py-2.5 rounded-full shadow-lg transition transform hover:-translate-y-0.5">
+              <span>🎲 محتار تاكل إيه؟ جرّب عجلة الحظ</span>
+              <span class="bg-orange-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">خصم 20%</span>
+            </button>
+            <button onclick="openGroupOrderModal()" class="inline-flex items-center gap-2 bg-black/25 hover:bg-black/40 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-full backdrop-blur-xs transition shadow-sm">
+              <span>👥 طلب جماعي مع أصحابك</span>
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- قسم اختيار المزاج (Mood Matcher) -->
+        <div class="mb-8 bg-gradient-to-r from-orange-50/70 via-amber-50/60 to-orange-50/70 dark:from-stone-900/60 dark:to-stone-900/60 p-4 sm:p-5 rounded-2xl border border-orange-200/60 dark:border-stone-800">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">✨</span>
+              <div>
+                <h2 class="text-base sm:text-lg font-black text-stone-900 dark:text-white">إيه مودك ومزاجك اليوم؟</h2>
+                <p class="text-xs text-stone-500 dark:text-stone-400">اختر مودك وسنختار لك أنسب المطاعم والوجبات فوراً</p>
+              </div>
+            </div>
+            <button id="clear-mood-btn" onclick="resetMood()" class="hidden text-xs text-orange-600 dark:text-orange-400 hover:underline font-bold flex items-center gap-1">
+              <span>إلغاء المود ✕</span>
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3">
+            <button onclick="selectMood('speed')" class="mood-card text-right p-3 rounded-xl bg-white dark:bg-stone-800 border-2 border-transparent hover:border-orange-300 dark:hover:border-orange-500 transition shadow-xs flex flex-col justify-between" data-mood="speed">
+              <div class="text-2xl mb-1">🚀</div>
+              <div class="font-bold text-xs sm:text-sm text-stone-900 dark:text-white">مستعجل وجعان</div>
+              <div class="text-[10px] text-stone-400">توصيل صاروخي &lt; 25 دقيقة</div>
+            </button>
+            <button onclick="selectMood('night')" class="mood-card text-right p-3 rounded-xl bg-white dark:bg-stone-800 border-2 border-transparent hover:border-orange-300 dark:hover:border-orange-500 transition shadow-xs flex flex-col justify-between" data-mood="night">
+              <div class="text-2xl mb-1">🎬</div>
+              <div class="font-bold text-xs sm:text-sm text-stone-900 dark:text-white">سهرة وفيلم</div>
+              <div class="text-[10px] text-stone-400">بيتزا، برجر وسناكس</div>
+            </button>
+            <button onclick="selectMood('healthy')" class="mood-card text-right p-3 rounded-xl bg-white dark:bg-stone-800 border-2 border-transparent hover:border-orange-300 dark:hover:border-orange-500 transition shadow-xs flex flex-col justify-between" data-mood="healthy">
+              <div class="text-2xl mb-1">🥗</div>
+              <div class="font-bold text-xs sm:text-sm text-stone-900 dark:text-white">دايت وصحة</div>
+              <div class="text-[10px] text-stone-400">سعرات محسوبة وبروتين</div>
+            </button>
+            <button onclick="selectMood('saving')" class="mood-card text-right p-3 rounded-xl bg-white dark:bg-stone-800 border-2 border-transparent hover:border-orange-300 dark:hover:border-orange-500 transition shadow-xs flex flex-col justify-between" data-mood="saving">
+              <div class="text-2xl mb-1">💰</div>
+              <div class="font-bold text-xs sm:text-sm text-stone-900 dark:text-white">توفير وعروض</div>
+              <div class="text-[10px] text-stone-400">توصيل مجاني وخصومات</div>
+            </button>
+            <button onclick="selectMood('chill')" class="mood-card text-right p-3 rounded-xl bg-white dark:bg-stone-800 border-2 border-transparent hover:border-orange-300 dark:hover:border-orange-500 transition shadow-xs flex flex-col justify-between col-span-2 sm:col-span-1" data-mood="chill">
+              <div class="text-2xl mb-1">☕</div>
+              <div class="font-bold text-xs sm:text-sm text-stone-900 dark:text-white">روقان ومزاج</div>
+              <div class="text-[10px] text-stone-400">قهوة مختصة وحلويات</div>
+            </button>
+          </div>
+        </div>
+
         <!-- صف التصنيفات -->
         <div class="mb-6">
           <h2 class="text-lg font-bold mb-3">تصفح حسب التصنيف</h2>
           <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
             <button onclick="filterByCategory('all')" class="category-chip active flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-primary text-white font-semibold text-sm transition hover:border-primary" data-cat="all">
               🍽️ الكل
+            </button>
+            <button onclick="filterByCategory('fav')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-rose-200 bg-white font-semibold text-sm transition hover:border-rose-400 text-rose-600" data-cat="fav">
+              ❤️ المفضلة <span id="fav-count-badge" class="text-xs bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-full hidden">0</span>
             </button>
             <button onclick="filterByCategory('burger')" class="category-chip flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-full border-2 border-orange-200 bg-white font-semibold text-sm transition hover:border-primary" data-cat="burger">
               🍔 برجر
@@ -462,6 +589,17 @@
       </button>
     </div>
 
+    <!-- بنر الطلب الجماعي داخل السلة -->
+    <div class="px-4 py-2.5 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/40 border-b border-purple-100 dark:border-purple-900/50 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-2 text-xs text-purple-900 dark:text-purple-200 font-bold">
+        <span>👥</span>
+        <span>طلب جماعي مع أصحابك؟</span>
+      </div>
+      <button onclick="closeCart(); openGroupOrderModal();" class="text-[11px] bg-purple-600 hover:bg-purple-700 text-white font-extrabold px-3 py-1 rounded-lg transition shadow-xs">
+        بدء الغرفة
+      </button>
+    </div>
+
     <!-- محتوى السلة -->
     <div id="cart-content" class="flex-1 overflow-y-auto p-4 sm:p-5">
       <!-- عناصر السلة - يتم ملؤها بالجافاسكربت -->
@@ -513,6 +651,225 @@
         </button>
         <button onclick="closeSuccessModal(); navigateTo('home')" class="flex-1 border-2 border-primary text-primary font-bold py-3 rounded-xl transition text-xs sm:text-sm hover:bg-orange-50">
           الرئيسية
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- زر عجلة الحظ العائم (FAB) -->
+  <!-- ============================================ -->
+  <button onclick="openRouletteModal()" class="pulse-glow fixed bottom-20 md:bottom-6 left-4 z-40 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-xs sm:text-sm px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 border-2 border-white/40 hover:scale-105 transition active:scale-95" title="عجلة الحظ: محتار تاكل إيه؟">
+    <span class="text-lg">🎲</span>
+    <span class="font-black hidden sm:inline">محتار تاكل إيه؟</span>
+    <span class="font-black inline sm:hidden">العجلة 🎲</span>
+    <span class="bg-white text-orange-600 text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-xs">20% خصم</span>
+  </button>
+
+  <!-- ============================================ -->
+  <!-- مودال عجلة الحظ (Food Roulette) -->
+  <!-- ============================================ -->
+  <div id="roulette-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="modal-content-box bg-white dark:bg-stone-900 rounded-3xl shadow-2xl max-w-sm sm:max-w-md w-full p-5 sm:p-6 text-center transform scale-95 transition-transform max-h-[92dvh] overflow-y-auto relative">
+      <button onclick="closeRouletteModal()" class="absolute top-4 left-4 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-stone-800 text-gray-400 hover:text-gray-700 transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="inline-block bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-black px-3 py-1 rounded-full mb-2">
+        🎲 محتار في وجبة اليوم؟
+      </div>
+      <h3 class="text-xl sm:text-2xl font-black text-stone-900 dark:text-white mb-1">عجلة الحظ الذكية!</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">لف العجلة ودع الحظ يختار لك أشهى وجبة مع كود خصم خاص 🎁</p>
+
+      <!-- حاوية العجلة -->
+      <div class="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] mx-auto mb-4 flex items-center justify-center">
+        <!-- مؤشر العجلة العلوي -->
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-red-600 drop-shadow-md"></div>
+        <canvas id="roulette-canvas" width="320" height="320" class="rounded-full shadow-xl"></canvas>
+        <!-- المركز -->
+        <div class="absolute inset-auto w-14 h-14 rounded-full bg-white dark:bg-stone-800 shadow-lg border-4 border-amber-400 z-10 flex items-center justify-center font-black text-amber-600 text-lg">
+          🍔
+        </div>
+      </div>
+
+      <!-- نتيجة العجلة -->
+      <div id="roulette-result" class="hidden mb-4 p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-stone-800 dark:to-stone-800 border border-amber-200 dark:border-amber-700/50 rounded-2xl">
+        <div class="text-xs text-amber-700 dark:text-amber-400 font-bold mb-1">مبروك! وجبتك الرابحة اليوم هي:</div>
+        <div id="roulette-winner-name" class="text-lg font-black text-primary mb-1">برجر مدخن فاخر 🍔</div>
+        <div class="text-xs text-stone-600 dark:text-stone-300 mb-3">استخدم كود <span class="bg-primary text-white font-black px-2 py-0.5 rounded-md text-xs select-all">LUCKY20</span> للحصول على خصم 20%!</div>
+        <button id="roulette-action-btn" onclick="applyRouletteWinner()" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-xl text-xs transition shadow-sm">
+          تصفح المطاعم المناسبة لهذه الوجبة 🚀
+        </button>
+      </div>
+
+      <button id="spin-wheel-btn" onclick="spinWheel()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black py-3.5 rounded-2xl shadow-lg transition active:scale-95 text-sm sm:text-base flex items-center justify-center gap-2">
+        <span>لف العجلة الآن 🎯</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- مودال الطلب الجماعي (Group Order) -->
+  <!-- ============================================ -->
+  <div id="group-order-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="modal-content-box bg-white dark:bg-stone-900 rounded-3xl shadow-2xl max-w-lg w-full p-5 sm:p-6 text-right transform scale-95 transition-transform max-h-[92dvh] overflow-y-auto relative">
+      <button onclick="closeGroupOrderModal()" class="absolute top-4 left-4 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-stone-800 text-gray-400 hover:text-gray-700 transition">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-2.5 mb-2">
+        <div class="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 flex items-center justify-center text-xl font-bold">
+          👥
+        </div>
+        <div>
+          <h3 class="text-lg sm:text-xl font-black text-stone-900 dark:text-white">طلب جماعي مع أصحابك</h3>
+          <p class="text-xs text-gray-500 dark:text-gray-400">اطلبوا معاً في سلة واحدة وقسّموا الحساب بسهولة!</p>
+        </div>
+      </div>
+
+      <!-- كود الغرفة -->
+      <div class="bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 rounded-2xl p-3.5 mb-4 flex items-center justify-between">
+        <div>
+          <div class="text-[11px] text-purple-700 dark:text-purple-300 font-bold">رمز غرفة الطلب الجماعي</div>
+          <div class="text-xl font-black tracking-widest text-purple-900 dark:text-purple-100" id="group-room-code">#FOODIE-8842</div>
+        </div>
+        <button onclick="copyGroupLink()" class="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-xs">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span>نسخ الرابط</span>
+        </button>
+      </div>
+
+      <!-- قائمة المشتركين -->
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-stone-700 dark:text-stone-300">المشاركون في الطلب (<span id="group-participants-count">3</span>)</span>
+          <button onclick="simulateFriendJoin()" class="text-xs text-primary hover:underline font-bold flex items-center gap-1">
+            <span>+ محاكاة انضمام صديق</span>
+          </button>
+        </div>
+        <div id="group-members-list" class="space-y-2 max-h-48 overflow-y-auto">
+          <!-- أعضاء المجموعة يتم ملؤها بالجافاسكربت -->
+        </div>
+      </div>
+
+      <!-- حاسبة تقسيم الفاتورة التفاعلية -->
+      <div class="bg-gray-50 dark:bg-stone-800/60 rounded-2xl p-4 border border-gray-100 dark:border-stone-700 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-black text-stone-800 dark:text-stone-200">حاسبة تقسيم الفاتورة 🧮</span>
+          <div class="flex gap-1 text-[11px] bg-white dark:bg-stone-900 p-0.5 rounded-lg border border-gray-200 dark:border-stone-700">
+            <button onclick="setSplitMode('exact')" id="split-mode-exact" class="px-2 py-1 rounded-md font-bold bg-primary text-white">حسب الطلب</button>
+            <button onclick="setSplitMode('equal')" id="split-mode-equal" class="px-2 py-1 rounded-md font-bold text-gray-500">بالتساوي</button>
+          </div>
+        </div>
+        <div id="group-split-breakdown" class="space-y-1.5 text-xs">
+          <!-- تفاصيل الحساب لكل شخص -->
+        </div>
+        <div class="border-t border-gray-200 dark:border-stone-700 mt-3 pt-2 flex justify-between font-black text-sm">
+          <span>إجمالي الطلب الجماعي:</span>
+          <span id="group-grand-total" class="text-primary font-black">114 ر.س</span>
+        </div>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="addGroupItemsToCart()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-extrabold py-3 rounded-xl transition text-xs sm:text-sm shadow-md">
+          إضافة كل الطلبات للسلة وتأكيد 🛒
+        </button>
+        <button onclick="closeGroupOrderModal()" class="px-4 py-3 rounded-xl border border-gray-200 dark:border-stone-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-stone-800 text-xs font-bold transition">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- مودال محادثة الكابتن المباشرة (Driver Live Chat) -->
+  <!-- ============================================ -->
+  <div id="driver-chat-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+    <div class="modal-content-box bg-white dark:bg-stone-900 rounded-3xl shadow-2xl max-w-md w-full h-[540px] max-h-[92dvh] flex flex-col overflow-hidden relative text-right">
+      <!-- رأس الشات -->
+      <div class="p-3.5 bg-gradient-to-l from-emerald-600 to-teal-700 text-white flex items-center justify-between flex-shrink-0 shadow-sm">
+        <div class="flex items-center gap-2.5">
+          <div class="relative">
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-xl">
+              🛵
+            </div>
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-emerald-700 rounded-full"></span>
+          </div>
+          <div>
+            <div class="font-black text-sm flex items-center gap-1.5">
+              <span>كابتن أحمد النجار</span>
+              <span class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-normal">⭐ 4.9</span>
+            </div>
+            <div id="driver-status-text" class="text-[10px] text-emerald-100">متصل الآن • في الطريق إليك (12 دقيقة)</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1">
+          <button onclick="openDriverCallModal()" class="p-2 rounded-xl hover:bg-white/10 transition text-white" title="اتصال">
+            <i data-lucide="phone" class="w-4 h-4"></i>
+          </button>
+          <button onclick="closeDriverChatModal()" class="p-2 rounded-xl hover:bg-white/10 transition text-white">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- مساحة الرسائل -->
+      <div id="driver-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-[#f0f2f5] dark:bg-[#0f172a]">
+        <!-- رسائل المحادثة بالجافاسكربت -->
+      </div>
+
+      <!-- مؤشر الكتابة -->
+      <div id="driver-typing-indicator" class="hidden px-4 py-1 text-xs text-gray-400 flex items-center gap-1.5 bg-[#f0f2f5] dark:bg-[#0f172a]">
+        <span>الكابتن يكتب الآن</span>
+        <span class="inline-flex gap-1">
+          <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+          <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+          <span class="w-1.5 h-1.5 bg-gray-400 rounded-full typing-dot"></span>
+        </span>
+      </div>
+
+      <!-- اقتراحات سريعة -->
+      <div class="p-2 bg-white dark:bg-stone-900 border-t border-gray-100 dark:border-stone-800 flex gap-1.5 overflow-x-auto hide-scrollbar flex-shrink-0">
+        <button onclick="sendQuickChatMessage('أنا في انتظارك أمام العمارة يا كابتن 👍')" class="flex-shrink-0 text-[11px] bg-gray-100 dark:bg-stone-800 hover:bg-orange-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 px-2.5 py-1 rounded-full border border-gray-200 dark:border-stone-700 transition">
+          أمام العمارة 👍
+        </button>
+        <button onclick="sendQuickChatMessage('لو سمحت لا تقرع الجرس 🤫')" class="flex-shrink-0 text-[11px] bg-gray-100 dark:bg-stone-800 hover:bg-orange-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 px-2.5 py-1 rounded-full border border-gray-200 dark:border-stone-700 transition">
+          لا تقرع الجرس 🤫
+        </button>
+        <button onclick="sendQuickChatMessage('وصلت ولا لسه يا غالي؟ 🛵')" class="flex-shrink-0 text-[11px] bg-gray-100 dark:bg-stone-800 hover:bg-orange-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 px-2.5 py-1 rounded-full border border-gray-200 dark:border-stone-700 transition">
+          وصلت؟ 🛵
+        </button>
+        <button onclick="sendQuickChatMessage('معاك فكة 100 ريال؟ 💵')" class="flex-shrink-0 text-[11px] bg-gray-100 dark:bg-stone-800 hover:bg-orange-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 px-2.5 py-1 rounded-full border border-gray-200 dark:border-stone-700 transition">
+          معاك فكة؟ 💵
+        </button>
+      </div>
+
+      <!-- شريط إرسال الرسالة -->
+      <div class="p-3 bg-white dark:bg-stone-900 border-t border-gray-200 dark:border-stone-800 flex items-center gap-2 flex-shrink-0">
+        <input id="driver-chat-input" type="text" placeholder="اكتب رسالة للكابتن..." 
+          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-stone-700 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-stone-800 dark:text-white"
+          onkeypress="if(event.key === 'Enter') sendChatMessage()">
+        <button onclick="sendChatMessage()" class="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition flex-shrink-0 shadow-sm">
+          <i data-lucide="send" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- مودال الاتصال الهاتفي بالكابتن (Driver Call Modal) -->
+  <!-- ============================================ -->
+  <div id="driver-call-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="bg-stone-900 text-white rounded-3xl shadow-2xl max-w-xs w-full p-6 text-center">
+      <div class="w-20 h-20 rounded-full bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/50 flex items-center justify-center text-4xl mx-auto mb-4 pulse-glow">
+        🛵
+      </div>
+      <h3 class="text-xl font-black mb-1">كابتن أحمد النجار</h3>
+      <p id="call-status-timer" class="text-xs text-stone-400 mb-6">جاري الاتصال للكابتن...</p>
+      
+      <div class="flex justify-center gap-6">
+        <button onclick="closeDriverCallModal()" class="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center text-white shadow-lg transition active:scale-95" title="إنهاء المكالمة">
+          <i data-lucide="phone-off" class="w-6 h-6"></i>
         </button>
       </div>
     </div>
@@ -781,12 +1138,14 @@
     ];
 
     // ==========================================
-    // حالة السلة
+    // حالة السلة والميزات الذكية
     // ==========================================
     let cart = [];
     let currentRestaurant = null;
     let activeFilters = new Set();
     let activeCategory = 'all';
+    let activeMood = null;
+    let favorites = new Set(JSON.parse(localStorage.getItem('foodie_favorites') || '[]'));
 
     // ==========================================
     // دوال التنقل
@@ -849,17 +1208,32 @@
     }
 
     // ==========================================
-    // عرض المطاعم
+    // عرض المطاعم مع الفلاتر والمزاج والمفضلة
     // ==========================================
     function renderRestaurants() {
       const grid = document.getElementById('restaurants-grid');
       const searchTerm = document.getElementById('main-search')?.value?.trim().toLowerCase() || '';
 
+      updateFavBadge();
+
       let filtered = restaurants.filter(r => {
         // فلتر البحث
         if (searchTerm && !r.name.includes(searchTerm) && !r.type.includes(searchTerm)) return false;
-        // فلتر التصنيف
-        if (activeCategory !== 'all' && r.category !== activeCategory) return false;
+        
+        // فلتر المفضلة أو التصنيف
+        if (activeCategory === 'fav') {
+          if (!favorites.has(r.id)) return false;
+        } else if (activeCategory !== 'all' && r.category !== activeCategory) {
+          return false;
+        }
+
+        // فلتر المزاج الذكي
+        if (activeMood === 'speed' && parseInt(r.deliveryTime) > 25) return false;
+        if (activeMood === 'night' && r.category !== 'burger' && r.category !== 'pizza') return false;
+        if (activeMood === 'healthy' && r.category !== 'healthy') return false;
+        if (activeMood === 'saving' && r.deliveryFee > 0 && r.rating < 4.6) return false;
+        if (activeMood === 'chill' && r.category !== 'dessert') return false;
+
         // فلاتر إضافية
         if (activeFilters.has('top-rated') && r.rating < 4.7) return false;
         if (activeFilters.has('fastest') && parseInt(r.deliveryTime) > 30) return false;
@@ -874,28 +1248,35 @@
       }
       document.getElementById('no-results').classList.add('hidden');
 
-      grid.innerHTML = filtered.map(r => `
-        <div class="restaurant-card bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer border border-gray-50" onclick="openRestaurant(${r.id})">
+      grid.innerHTML = filtered.map(r => {
+        const isFav = favorites.has(r.id);
+        return `
+        <div class="restaurant-card bg-white dark:bg-stone-900 rounded-2xl shadow-sm overflow-hidden cursor-pointer border border-gray-100 dark:border-stone-800 relative group" onclick="openRestaurant(${r.id})">
+          <!-- زر المفضلة -->
+          <button onclick="event.stopPropagation(); toggleFavorite(${r.id})" class="absolute top-3 left-3 z-20 w-9 h-9 rounded-full bg-white/90 dark:bg-stone-800/90 backdrop-blur-xs flex items-center justify-center shadow-md transition hover:scale-110 active:scale-90" title="حفظ في المفضلة">
+            <span class="text-sm transition-transform ${isFav ? 'heart-pop' : ''}">${isFav ? '❤️' : '🤍'}</span>
+          </button>
+
           <!-- صورة المطعم -->
           <div class="relative h-40 bg-gradient-to-l ${r.gradient} flex items-center justify-center">
-            <span class="text-7xl">${r.emoji}</span>
+            <span class="text-7xl group-hover:scale-110 transition-transform duration-300">${r.emoji}</span>
             ${r.featured ? '<span class="absolute top-3 right-3 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">⭐ مميز</span>' : ''}
-            ${r.deliveryFee === 0 ? '<span class="absolute top-3 left-3 bg-success text-white text-xs font-bold px-3 py-1 rounded-full">توصيل مجاني</span>' : ''}
+            ${r.deliveryFee === 0 ? '<span class="absolute bottom-3 right-3 bg-success text-white text-xs font-bold px-3 py-1 rounded-full">توصيل مجاني</span>' : ''}
           </div>
           <!-- معلومات المطعم -->
           <div class="p-4">
             <div class="flex items-start justify-between mb-2">
               <div>
-                <h3 class="font-bold text-lg">${r.name}</h3>
-                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">${r.type}</span>
+                <h3 class="font-bold text-lg dark:text-white">${r.name}</h3>
+                <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-stone-800 px-2 py-0.5 rounded-full">${r.type}</span>
               </div>
-              <div class="flex items-center gap-1 text-sm font-semibold bg-orange-50 px-2 py-1 rounded-lg">
+              <div class="flex items-center gap-1 text-sm font-semibold bg-orange-50 dark:bg-stone-800 px-2 py-1 rounded-lg">
                 <span>⭐</span>
-                <span>${r.rating}</span>
+                <span class="dark:text-white">${r.rating}</span>
                 <span class="text-gray-400 text-xs">(${r.ratingCount})</span>
               </div>
             </div>
-            <div class="flex items-center gap-4 text-sm text-gray-500">
+            <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
               <span class="flex items-center gap-1">
                 <i data-lucide="clock" class="w-3.5 h-3.5"></i>
                 ${r.deliveryTime} دقيقة
@@ -907,9 +1288,84 @@
             </div>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       lucide.createIcons();
+    }
+
+    function toggleFavorite(id) {
+      if (favorites.has(id)) {
+        favorites.delete(id);
+        showToast('تمت الإزالة من المفضلة 🤍', 'info');
+      } else {
+        favorites.add(id);
+        showToast('تمت الإضافة للمفضلة ❤️', 'success');
+      }
+      localStorage.setItem('foodie_favorites', JSON.stringify(Array.from(favorites)));
+      renderRestaurants();
+    }
+
+    function updateFavBadge() {
+      const badge = document.getElementById('fav-count-badge');
+      if (badge) {
+        if (favorites.size > 0) {
+          badge.textContent = favorites.size;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+    }
+
+    // ==========================================
+    // فلتر المزاج التفاعلي
+    // ==========================================
+    const moodNames = {
+      speed: '🚀 مستعجل وجعان',
+      night: '🎬 سهرة وفيلم',
+      healthy: '🥗 دايت وصحة',
+      saving: '💰 توفير وعروض',
+      chill: '☕ روقان ومزاج'
+    };
+
+    function selectMood(moodKey) {
+      if (activeMood === moodKey) {
+        resetMood();
+        return;
+      }
+      activeMood = moodKey;
+      
+      // تحديث حالة البطاقات
+      document.querySelectorAll('.mood-card').forEach(card => {
+        if (card.dataset.mood === moodKey) {
+          card.classList.add('border-primary', 'bg-orange-50/80', 'dark:bg-stone-700');
+          card.classList.remove('border-transparent');
+        } else {
+          card.classList.remove('border-primary', 'bg-orange-50/80', 'dark:bg-stone-700');
+          card.classList.add('border-transparent');
+        }
+      });
+
+      const clearBtn = document.getElementById('clear-mood-btn');
+      if (clearBtn) clearBtn.classList.remove('hidden');
+
+      showToast(`تم تفعيل مود: ${moodNames[moodKey]} ✨`, 'info');
+      renderRestaurants();
+
+      // تمرير سلس نحو نتائج المطاعم
+      document.getElementById('restaurants-grid')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function resetMood() {
+      activeMood = null;
+      document.querySelectorAll('.mood-card').forEach(card => {
+        card.classList.remove('border-primary', 'bg-orange-50/80', 'dark:bg-stone-700');
+        card.classList.add('border-transparent');
+      });
+      const clearBtn = document.getElementById('clear-mood-btn');
+      if (clearBtn) clearBtn.classList.add('hidden');
+      renderRestaurants();
     }
 
     function filterByCategory(cat) {
@@ -1444,7 +1900,7 @@
     }
 
     // ==========================================
-    // صفحة طلباتي
+    // صفحة طلباتي مع محاكي التتبع الحي والكابتن
     // ==========================================
     function renderOrders() {
       const list = document.getElementById('orders-list');
@@ -1460,51 +1916,546 @@
       empty.classList.add('hidden');
 
       const statusLabels = ['تم الطلب', 'قيد التحضير', 'في الطريق', 'تم التوصيل'];
-      const statusIcons = ['📋', '👨‍🍳', '🚗', '✅'];
+      const statusIcons = ['📋', '👨‍🍳', '🛵', '✅'];
 
-      list.innerHTML = orders.map(order => `
-        <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-50">
+      list.innerHTML = orders.map(order => {
+        const isActive = order.status < 3;
+        return `
+        <div class="bg-white dark:bg-stone-900 rounded-3xl shadow-sm p-5 sm:p-6 border border-gray-100 dark:border-stone-800 transition">
           <!-- رأس الطلب -->
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
-              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-50 dark:from-stone-800 dark:to-stone-700 flex items-center justify-center">
                 <span class="text-2xl">${order.emoji}</span>
               </div>
               <div>
-                <h3 class="font-bold">${order.restaurantName}</h3>
+                <h3 class="font-bold text-base sm:text-lg dark:text-white">${order.restaurantName}</h3>
                 <p class="text-xs text-gray-400">${order.date}</p>
               </div>
             </div>
-            <div>
-              <span class="text-sm font-bold text-primary">${order.id}</span>
-              <div class="text-xs text-gray-400 mt-0.5">${order.total} ر.س</div>
+            <div class="text-left">
+              <span class="text-sm font-black text-primary">${order.id}</span>
+              <div class="text-xs font-bold text-stone-700 dark:text-stone-300 mt-0.5">${order.total} ر.س</div>
             </div>
           </div>
 
           <!-- العناصر -->
-          <div class="bg-gray-50 rounded-xl p-3 mb-4">
-            ${order.items.map(item => `<p class="text-sm text-gray-600">• ${item}</p>`).join('')}
+          <div class="bg-gray-50 dark:bg-stone-800/60 rounded-2xl p-3.5 mb-5 border border-gray-100/80 dark:border-stone-800">
+            ${order.items.map(item => `<p class="text-xs sm:text-sm text-stone-600 dark:text-stone-300 font-medium">• ${item}</p>`).join('')}
           </div>
 
-          <!-- شريط التقدم -->
-          <div class="relative">
-            <div class="flex justify-between mb-2">
+          <!-- شريط المراحل -->
+          <div class="relative mb-6">
+            <div class="flex justify-between mb-2 relative z-10">
               ${statusLabels.map((label, idx) => `
                 <div class="flex flex-col items-center flex-1">
-                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm mb-1 ${idx <= order.status ? 'bg-primary text-white' : 'bg-gray-200 text-gray-400'}">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm mb-1 transition-all shadow-xs ${idx <= order.status ? 'bg-primary text-white ring-4 ring-orange-100 dark:ring-orange-950/60' : 'bg-gray-200 dark:bg-stone-800 text-gray-400'}">
                     ${statusIcons[idx]}
                   </div>
-                  <span class="text-[10px] font-semibold text-center ${idx <= order.status ? 'text-primary' : 'text-gray-400'}">${label}</span>
+                  <span class="text-[10px] sm:text-xs font-bold text-center ${idx <= order.status ? 'text-primary' : 'text-gray-400'}">${label}</span>
                 </div>
               `).join('')}
             </div>
             <!-- خط التقدم -->
-            <div class="absolute top-4 right-[16.6%] left-[16.6%] h-0.5 bg-gray-200 -z-0">
-              <div class="h-full bg-primary transition-all" style="width: ${(order.status / 3) * 100}%"></div>
+            <div class="absolute top-4.5 right-[12.5%] left-[12.5%] h-1 bg-gray-200 dark:bg-stone-800 -z-0 rounded-full">
+              <div class="h-full bg-primary transition-all duration-500 rounded-full" style="width: ${(order.status / 3) * 100}%"></div>
             </div>
           </div>
+
+          <!-- بطاقة المحاكاة الذكية المباشرة للطلب النشط -->
+          ${isActive ? `
+            <div class="mt-4 p-4 rounded-2xl bg-gradient-to-r from-amber-50/70 via-orange-50/60 to-amber-50/70 dark:from-stone-800/80 dark:to-stone-800/80 border border-orange-200/80 dark:border-stone-700">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg animate-pulse">🔴</span>
+                  <div>
+                    <h4 class="text-xs sm:text-sm font-black text-stone-900 dark:text-white flex items-center gap-1.5">
+                      <span>تتبع مباشر للطلب</span>
+                      <span class="text-[10px] bg-orange-200 dark:bg-orange-950 text-orange-800 dark:text-orange-200 px-2 py-0.5 rounded-full font-bold">مباشر ⚡</span>
+                    </h4>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400">الوقت التقديري للوصول: <span class="font-bold text-primary">12 دقيقة</span></p>
+                  </div>
+                </div>
+                <!-- زر محاكاة الخطوة التالية -->
+                <button onclick="advanceOrderStatus('${order.id}')" class="text-xs bg-white dark:bg-stone-700 hover:bg-orange-100 dark:hover:bg-stone-600 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-stone-600 font-extrabold px-3 py-1.5 rounded-xl transition shadow-xs flex items-center justify-center gap-1">
+                  <span>⚡ تقديم خطوة في المحاكاة</span>
+                </button>
+              </div>
+
+              <!-- مسار الخريطة التفاعلي المصغر -->
+              <div class="relative bg-white dark:bg-stone-900 rounded-xl p-3 mb-3 border border-orange-100 dark:border-stone-800 overflow-hidden">
+                <div class="flex items-center justify-between text-xs font-bold text-stone-500 mb-1">
+                  <span class="flex items-center gap-1">🏪 المطعم</span>
+                  <span class="flex items-center gap-1">🏠 باب منزلك</span>
+                </div>
+                <div class="relative h-6 flex items-center">
+                  <div class="w-full h-1.5 bg-gray-100 dark:bg-stone-800 rounded-full"></div>
+                  <!-- الدراجة المتحركة على المسار -->
+                  <div class="absolute top-1/2 -translate-y-1/2 transition-all duration-700 flex flex-col items-center" style="right: ${order.status === 0 ? '10%' : order.status === 1 ? '40%' : order.status === 2 ? '75%' : '95%'}">
+                    <span class="text-xl scooter-animated">🛵</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- بطاقة الكابتن وخيارات التواصل -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-orange-200/50 dark:border-stone-700">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-sm">
+                    🛵
+                  </div>
+                  <div>
+                    <div class="font-black text-xs text-stone-900 dark:text-white">كابتن أحمد النجار</div>
+                    <div class="text-[10px] text-gray-500 dark:text-gray-400">تقييم 4.9 ⭐ • دراجة هوندا</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="openDriverChatModal()" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-xs">
+                    <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                    <span>محادثة الكابتن</span>
+                  </button>
+                  <button onclick="openDriverCallModal()" class="flex items-center justify-center p-2 rounded-xl border border-gray-200 dark:border-stone-700 hover:bg-white dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition" title="اتصال">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ` : `
+            <div class="mt-4 flex items-center justify-between p-3 rounded-xl bg-green-50/80 dark:bg-green-950/30 text-green-800 dark:text-green-300 text-xs font-bold border border-green-200/60 dark:border-green-800/40">
+              <span class="flex items-center gap-1.5">✓ تم توصيل طلبك بنجاح وبالهناء والشفاء!</span>
+              <button onclick="showToast('شكراً لتقييمك 5 نجوم! ⭐⭐⭐⭐⭐', 'success')" class="text-[11px] underline text-green-700 dark:text-green-400 hover:text-green-900">تقييم الطلب</button>
+            </div>
+          `}
+        </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function advanceOrderStatus(orderId) {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      if (order.status < 3) {
+        order.status++;
+        const nextLabels = ['تم الطلب', 'المطعم بدأ في تحضير وجبتك! 👨‍🍳', 'الكابتن استلم الطلب وهو في الطريق إليك! 🛵💨', 'وصل الكابتن لبابك وتم التوصيل بنجاح! 🎉'];
+        showToast(nextLabels[order.status], 'success');
+        if (order.status === 3) {
+          throwConfetti();
+        }
+        renderOrders();
+      } else {
+        showToast('الطلب مكتمل بالفعل ✅', 'info');
+      }
+    }
+
+    // ==========================================
+    // محاكي عجلة الحظ (Food Roulette)
+    // ==========================================
+    const rouletteItems = [
+      { name: 'برجر مدخن فاخر 🍔', cat: 'burger', color: '#F97316' },
+      { name: 'بيتزا نابولي ترافل 🍕', cat: 'pizza', color: '#EF4444' },
+      { name: 'دراغون سوشي رول 🍣', cat: 'sushi', color: '#8B5CF6' },
+      { name: 'كنافة نابلسية بالجبن 🍰', cat: 'dessert', color: '#EC4899' },
+      { name: 'مشكل مشاوي وريش 🥩', cat: 'grill', color: '#F59E0B' },
+      { name: 'بوكيه سلمون صحي 🥗', cat: 'healthy', color: '#10B981' },
+      { name: 'وافل نوتيلا وفراولة 🧇', cat: 'dessert', color: '#3B82F6' },
+      { name: 'شاورما عربي دبل 🌯', cat: 'grill', color: '#E11D48' }
+    ];
+
+    let currentAngle = 0;
+    let isSpinning = false;
+    let selectedWinner = null;
+
+    function openRouletteModal() {
+      const modal = document.getElementById('roulette-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('roulette-result').classList.add('hidden');
+      drawWheel(currentAngle);
+      lucide.createIcons();
+    }
+
+    function closeRouletteModal() {
+      if (isSpinning) return;
+      const modal = document.getElementById('roulette-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    function drawWheel(angle) {
+      const canvas = document.getElementById('roulette-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const numSlices = rouletteItems.length;
+      const arc = (2 * Math.PI) / numSlices;
+      const radius = canvas.width / 2;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < numSlices; i++) {
+        const sliceAngle = angle + i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = rouletteItems[i].color;
+        ctx.moveTo(radius, radius);
+        ctx.arc(radius, radius, radius - 4, sliceAngle, sliceAngle + arc);
+        ctx.lineTo(radius, radius);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // رسم النص
+        ctx.save();
+        ctx.translate(radius, radius);
+        ctx.rotate(sliceAngle + arc / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px Cairo, sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(rouletteItems[i].name, radius - 20, 5);
+        ctx.restore();
+      }
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      document.getElementById('roulette-result').classList.add('hidden');
+      const spinBtn = document.getElementById('spin-wheel-btn');
+      spinBtn.disabled = true;
+      spinBtn.classList.add('opacity-50');
+
+      const extraRotations = 5 + Math.random() * 4;
+      const totalRadian = extraRotations * 2 * Math.PI + Math.random() * 2 * Math.PI;
+      const targetAngle = currentAngle + totalRadian;
+      const duration = 4000;
+      const startTime = performance.now();
+      const startAngle = currentAngle;
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // Ease out cubic
+        const ease = 1 - Math.pow(1 - progress, 3);
+        currentAngle = startAngle + (targetAngle - startAngle) * ease;
+        drawWheel(currentAngle);
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          isSpinning = false;
+          spinBtn.disabled = false;
+          spinBtn.classList.remove('opacity-50');
+          calculateRouletteWinner();
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function calculateRouletteWinner() {
+      const numSlices = rouletteItems.length;
+      const arc = (2 * Math.PI) / numSlices;
+      const normalizedAngle = (1.5 * Math.PI - (currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const winnerIndex = Math.floor(normalizedAngle / arc) % numSlices;
+      selectedWinner = rouletteItems[winnerIndex];
+
+      const resBox = document.getElementById('roulette-result');
+      document.getElementById('roulette-winner-name').textContent = selectedWinner.name;
+      resBox.classList.remove('hidden');
+
+      throwConfetti();
+      showToast(`مبروك! ربحت خصم 20% على ${selectedWinner.name}`, 'success');
+    }
+
+    function applyRouletteWinner() {
+      if (!selectedWinner) return;
+      closeRouletteModal();
+      navigateTo('home');
+      filterByCategory(selectedWinner.cat);
+      showToast(`تم تطبيق فلتر المطاعم لـ: ${selectedWinner.name}`, 'info');
+    }
+
+    // ==========================================
+    // محاكي الطلب الجماعي (Group Order Simulation)
+    // ==========================================
+    let groupMembers = [
+      { id: 1, name: 'أنت (المنظم) 👑', item: 'برجر كلاسيك دبل', price: 34 },
+      { id: 2, name: 'أحمد 🧑‍💻', item: 'بيتزا مارجريتا نابولي', price: 42 },
+      { id: 3, name: 'سارة 👩‍🎨', item: 'سلطة سيزر وبوكيه كينوا', price: 28 }
+    ];
+    let splitMode = 'exact'; // 'exact' or 'equal'
+
+    function openGroupOrderModal() {
+      const modal = document.getElementById('group-order-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+      renderGroupMembers();
+      renderSplitBreakdown();
+      lucide.createIcons();
+    }
+
+    function closeGroupOrderModal() {
+      const modal = document.getElementById('group-order-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    function renderGroupMembers() {
+      const list = document.getElementById('group-members-list');
+      document.getElementById('group-participants-count').textContent = groupMembers.length;
+      list.innerHTML = groupMembers.map(m => `
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-stone-800 border border-gray-100 dark:border-stone-700 text-xs">
+          <div>
+            <span class="font-bold text-stone-900 dark:text-white">${m.name}</span>
+            <div class="text-[11px] text-gray-500 dark:text-gray-400">${m.item}</div>
+          </div>
+          <span class="font-black text-primary text-xs">${m.price} ر.س</span>
         </div>
       `).join('');
+    }
+
+    function setSplitMode(mode) {
+      splitMode = mode;
+      const btnExact = document.getElementById('split-mode-exact');
+      const btnEqual = document.getElementById('split-mode-equal');
+      if (mode === 'exact') {
+        btnExact.className = 'px-2 py-1 rounded-md font-bold bg-primary text-white';
+        btnEqual.className = 'px-2 py-1 rounded-md font-bold text-gray-500';
+      } else {
+        btnEqual.className = 'px-2 py-1 rounded-md font-bold bg-primary text-white';
+        btnExact.className = 'px-2 py-1 rounded-md font-bold text-gray-500';
+      }
+      renderSplitBreakdown();
+    }
+
+    function renderSplitBreakdown() {
+      const breakdown = document.getElementById('group-split-breakdown');
+      const itemsSubtotal = groupMembers.reduce((sum, m) => sum + m.price, 0);
+      const deliveryFee = 10;
+      const grandTotal = itemsSubtotal + deliveryFee;
+      document.getElementById('group-grand-total').textContent = `${grandTotal} ر.س (شامل التوصيل)`;
+
+      if (splitMode === 'equal') {
+        const perPerson = (grandTotal / groupMembers.length).toFixed(1);
+        breakdown.innerHTML = groupMembers.map(m => `
+          <div class="flex justify-between text-stone-600 dark:text-stone-300">
+            <span>${m.name}:</span>
+            <span class="font-bold text-primary">${perPerson} ر.س</span>
+          </div>
+        `).join('');
+      } else {
+        const perPersonDelivery = (deliveryFee / groupMembers.length).toFixed(1);
+        breakdown.innerHTML = groupMembers.map(m => `
+          <div class="flex justify-between text-stone-600 dark:text-stone-300">
+            <span>${m.name} (${m.price} + ${perPersonDelivery} توصيل):</span>
+            <span class="font-bold text-primary">${(m.price + parseFloat(perPersonDelivery)).toFixed(1)} ر.س</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    function simulateFriendJoin() {
+      const names = ['كريم 🚴‍♂️', 'نور 🌸', 'يوسف 🎮', 'مها ☕'];
+      const dishes = [
+        { item: 'شاورما عربي دبل', price: 26 },
+        { item: 'كنافة نابلسية بالجبن', price: 25 },
+        { item: 'دراغون رول سوشي', price: 38 },
+        { item: 'وافل بالنوتيلا والفراولة', price: 24 }
+      ];
+      if (groupMembers.length >= 7) {
+        showToast('وصلت للحد الأقصى للمجموعة التجريبية', 'info');
+        return;
+      }
+      const randomName = names[Math.floor(Math.random() * names.length)];
+      const randomDish = dishes[Math.floor(Math.random() * dishes.length)];
+      groupMembers.push({
+        id: Date.now(),
+        name: randomName,
+        item: randomDish.item,
+        price: randomDish.price
+      });
+      renderGroupMembers();
+      renderSplitBreakdown();
+      showToast(`انضم ${randomName} وأضاف: ${randomDish.item} 🛒`, 'success');
+    }
+
+    function copyGroupLink() {
+      const dummyCode = 'https://foodie-prototype.vercel.app/customer.html?room=8842';
+      navigator.clipboard?.writeText?.(dummyCode);
+      showToast('تم نسخ رابط دعوة الطلب الجماعي! 📋', 'success');
+    }
+
+    function addGroupItemsToCart() {
+      groupMembers.forEach(m => {
+        cart.push({
+          id: Date.now() + Math.random(),
+          name: `${m.item} (${m.name})`,
+          price: m.price,
+          quantity: 1,
+          restaurantId: 1
+        });
+      });
+      updateCartBadge();
+      closeGroupOrderModal();
+      openCart();
+      showToast('تمت إضافة جميع طلبات المجموعة إلى السلة! 🎉', 'success');
+    }
+
+    // ==========================================
+    // محاكي محادثة الكابتن المباشرة (Driver Chat)
+    // ==========================================
+    let driverMessages = [
+      { sender: 'driver', text: 'السلام عليكم يا فندم! استلمت طلبك من المطعم وهو ساخن وحالياً في طريقي إليك 🛵💨', time: '8:42 م' },
+      { sender: 'user', text: 'وعليكم السلام يا كابتن، بانتظارك شكراً لك!', time: '8:43 م' }
+    ];
+
+    function openDriverChatModal() {
+      const modal = document.getElementById('driver-chat-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+      renderDriverChatMessages();
+      lucide.createIcons();
+    }
+
+    function closeDriverChatModal() {
+      const modal = document.getElementById('driver-chat-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    function renderDriverChatMessages() {
+      const container = document.getElementById('driver-chat-messages');
+      container.innerHTML = driverMessages.map(msg => {
+        const isUser = msg.sender === 'user';
+        return `
+          <div class="flex flex-col ${isUser ? 'items-start' : 'items-end'}">
+            <div class="max-w-[80%] rounded-2xl p-3 text-xs leading-relaxed shadow-xs ${isUser ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-white dark:bg-stone-800 text-stone-900 dark:text-white rounded-bl-none border border-gray-100 dark:border-stone-700'}">
+              ${msg.text}
+            </div>
+            <span class="text-[9px] text-gray-400 mt-1 px-1">${msg.time}</span>
+          </div>
+        `;
+      }).join('');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('driver-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      driverMessages.push({
+        sender: 'user',
+        text: text,
+        time: 'الآن'
+      });
+      renderDriverChatMessages();
+
+      // محاكاة رد الكابتن
+      const typing = document.getElementById('driver-typing-indicator');
+      typing.classList.remove('hidden');
+
+      setTimeout(() => {
+        typing.classList.add('hidden');
+        const driverReplies = [
+          'تمام يا فندم وصلت عند أول الشارع وخلال دقيقتين بكون عندك إن شاء الله 🛵',
+          'ولا يهمك يا فندم، كل ملاحظاتك على عيني! أبشر ✨',
+          'حاضر يا غالي، أول ما أوصل هعطيك مسكول بدون ما أزعجكم 🤫',
+          'معايا فكة يا فندم ما تشيل هم الفلوس أبداً 💵',
+          'أنا بالسيارة تحت العمارة حالياً يا فندم، مستنيك 🛵'
+        ];
+        const reply = driverReplies[Math.floor(Math.random() * driverReplies.length)];
+        driverMessages.push({
+          sender: 'driver',
+          text: reply,
+          time: 'الآن'
+        });
+        renderDriverChatMessages();
+      }, 1400);
+    }
+
+    function sendQuickChatMessage(text) {
+      document.getElementById('driver-chat-input').value = text;
+      sendChatMessage();
+    }
+
+    // محاكي الاتصال بالكابتن
+    let callTimerInterval = null;
+
+    function openDriverCallModal() {
+      const modal = document.getElementById('driver-call-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      lucide.createIcons();
+
+      const timerEl = document.getElementById('call-status-timer');
+      timerEl.textContent = 'جاري الاتصال بالكابتن...';
+
+      let seconds = 0;
+      setTimeout(() => {
+        timerEl.textContent = '00:00';
+        callTimerInterval = setInterval(() => {
+          seconds++;
+          const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+          const secs = String(seconds % 60).padStart(2, '0');
+          timerEl.textContent = `${mins}:${secs} • مكالمة متصلة 🟢`;
+        }, 1000);
+      }, 1500);
+    }
+
+    function closeDriverCallModal() {
+      const modal = document.getElementById('driver-call-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      if (callTimerInterval) clearInterval(callTimerInterval);
+      showToast('تم إنهاء المكالمة 📞', 'info');
+    }
+
+    // ==========================================
+    // الوضع الليلي (Dark Mode)
+    // ==========================================
+    function initTheme() {
+      const savedTheme = localStorage.getItem('foodie_theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      lucide.createIcons();
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('foodie_theme', isDark ? 'dark' : 'light');
+      showToast(isDark ? 'تم تفعيل الوضع الليلي 🌙' : 'تم تفعيل الوضع النهاري ☀️', 'info');
+      lucide.createIcons();
+    }
+
+    // ==========================================
+    // القصاصات الاحتفالية (Confetti)
+    // ==========================================
+    function throwConfetti() {
+      const colors = ['#F97316', '#EF4444', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B'];
+      for (let i = 0; i < 40; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+        piece.style.animationDelay = (Math.random() * 0.5) + 's';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+      }
     }
 
     // ==========================================
@@ -1517,7 +2468,7 @@
       const bgColors = {
         success: 'bg-success',
         error: 'bg-error',
-        info: 'bg-blue-500'
+        info: 'bg-primary'
       };
 
       const icons = {
@@ -1526,8 +2477,8 @@
         info: 'ℹ'
       };
 
-      toast.className = `toast-enter flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-white font-semibold text-sm ${bgColors[type] || bgColors.success}`;
-      toast.innerHTML = `<span class="text-lg">${icons[type] || icons.success}</span> ${message}`;
+      toast.className = `toast-enter flex items-center gap-2 px-5 py-3 rounded-2xl shadow-xl text-white font-bold text-xs sm:text-sm ${bgColors[type] || bgColors.success} border border-white/20`;
+      toast.innerHTML = `<span class="text-base">${icons[type] || icons.success}</span> ${message}`;
       
       container.appendChild(toast);
 
@@ -1542,6 +2493,7 @@
     // التهيئة عند تحميل الصفحة
     // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
       lucide.createIcons();
       renderRestaurants();
       updateCartBadge();
