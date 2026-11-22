@@ -40,7 +40,12 @@
   </script>
   
   <style>
-    * { font-family: 'Cairo', sans-serif; }
+    * { font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      position: relative;
+    }
     body { background: #FFFAF6; }
     
     /* شريط التمرير المخصص */
@@ -200,6 +205,21 @@
         <span>طلبات الانضمام</span>
         <span id="requests-badge" class="absolute left-4 top-1/2 -translate-y-1/2 bg-error text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">2</span>
       </button>
+
+      <div class="pt-2 border-t border-gray-100 mt-2 space-y-1">
+        <a href="customer.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200 hover:bg-orange-50 text-stone-600 text-sm">
+          <i data-lucide="shopping-cart" class="w-4 h-4 text-primary"></i>
+          <span class="font-semibold">واجهة العميل</span>
+        </a>
+        <a href="restaurant-admin.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200 hover:bg-orange-50 text-stone-600 text-sm">
+          <i data-lucide="store" class="w-4 h-4 text-primary"></i>
+          <span class="font-semibold">لوحة المطعم</span>
+        </a>
+        <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200 hover:bg-orange-50 text-stone-600 text-sm">
+          <i data-lucide="layers" class="w-4 h-4 text-primary"></i>
+          <span class="font-semibold">بوابة اختيار الأدوار</span>
+        </a>
+      </div>
     </nav>
     
     <!-- معلومات المستخدم في الأسفل -->
@@ -235,6 +255,9 @@
         </div>
         
         <div class="flex items-center gap-2">
+          <a href="index.html" class="flex items-center gap-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-orange-100 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl transition" title="بوابة اختيار الأدوار">
+            <span>الأدوار</span> <span class="text-xs">🔄</span>
+          </a>
           <!-- زر الإشعارات -->
           <button onclick="showToast('لا توجد إشعارات جديدة', 'info')" class="relative p-2.5 rounded-xl hover:bg-gray-100 transition-colors">
             <i data-lucide="bell" class="w-5 h-5 text-gray-500"></i>

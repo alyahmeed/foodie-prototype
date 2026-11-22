@@ -29,7 +29,12 @@
     }
   </script>
   <style>
-    * { font-family: 'Cairo', sans-serif; }
+    * { font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      position: relative;
+    }
     /* إخفاء شريط التمرير للقائمة الجانبية */
     .sidebar-scroll::-webkit-scrollbar { display: none; }
     .sidebar-scroll { -ms-overflow-style: none; scrollbar-width: none; }
@@ -99,6 +104,16 @@
           <i data-lucide="settings" class="w-5 h-5"></i>
           <span class="font-600">الإعدادات</span>
         </a>
+        <div class="pt-2 border-t border-gray-100 mt-2 space-y-1">
+          <a href="customer.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200 hover:bg-orange-50 text-stone-600 text-sm">
+            <i data-lucide="shopping-cart" class="w-4 h-4 text-primary"></i>
+            <span class="font-600">واجهة العميل</span>
+          </a>
+          <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200 hover:bg-orange-50 text-stone-600 text-sm">
+            <i data-lucide="layers" class="w-4 h-4 text-primary"></i>
+            <span class="font-600">بوابة اختيار الأدوار</span>
+          </a>
+        </div>
       </nav>
 
       <!-- معلومات المطعم أسفل القائمة -->
@@ -132,9 +147,12 @@
               <p class="text-sm text-gray-500">مرحباً بك في لوحة تحكم برجر هاوس</p>
             </div>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <a href="index.html" class="flex items-center gap-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-orange-100 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl transition" title="بوابة اختيار الأدوار">
+              <span>الأدوار</span> <span class="text-xs">🔄</span>
+            </a>
             <!-- جرس الإشعارات -->
-            <button onclick="showToast('لا توجد إشعارات جديدة', 'info')" class="relative p-2 hover:bg-gray-100 rounded-xl transition">
+            <button onclick="showToast('لا توجد إشعارات جديدة', 'info')" class="relative p-2 hover:bg-gray-100 rounded-xl transition text-stone-600">
               <i data-lucide="bell" class="w-5 h-5 text-gray-600"></i>
               <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-white"></span>
             </button>

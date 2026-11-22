@@ -36,12 +36,17 @@
     }
   </script>
   <style>
-    * { font-family: 'Cairo', sans-serif; }
+    * { font-family: 'Cairo', sans-serif; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      position: relative;
+    }
     body { background-color: #FFFAF6; color: #1C1917; }
 
     /* إخفاء شريط التمرير الأفقي للتصنيفات */
     .hide-scrollbar::-webkit-scrollbar { display: none; }
-    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 
     /* تأثير الهيكل العظمي للتحميل */
     .skeleton {
@@ -108,10 +113,10 @@
   <!-- ============================================ -->
   <!-- شريط التنقل العلوي (سطح المكتب والجوال) -->
   <!-- ============================================ -->
-  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-orange-100">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+  <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
       <!-- الشعار -->
-      <a href="#" onclick="navigateTo('home')" class="flex items-center gap-2 text-2xl font-black text-primary">
+      <a href="#" onclick="navigateTo('home')" class="flex items-center gap-1.5 text-xl sm:text-2xl font-black text-primary">
         <span>Foodie 🍔</span>
       </a>
 
@@ -119,20 +124,23 @@
       <div class="hidden md:flex items-center gap-6">
         <a href="#" onclick="navigateTo('home')" class="text-sm font-semibold text-text hover:text-primary transition">الرئيسية</a>
         <a href="#" onclick="navigateTo('orders')" class="text-sm font-semibold text-text hover:text-primary transition">طلباتي</a>
+        <a href="restaurant-admin.html" class="text-xs font-semibold text-stone-600 hover:text-primary transition bg-stone-100 hover:bg-orange-50 px-3 py-1.5 rounded-xl">لوحة المطعم 🍽️</a>
+        <a href="super-admin.html" class="text-xs font-semibold text-stone-600 hover:text-blue-600 transition bg-stone-100 hover:bg-blue-50 px-3 py-1.5 rounded-xl">لوحة الأدمن 🛡️</a>
       </div>
 
-      <!-- أيقونات -->
-      <div class="flex items-center gap-3">
-        <button onclick="focusSearch()" class="md:hidden p-2 rounded-full hover:bg-orange-50 transition">
-          <i data-lucide="search" class="w-5 h-5 text-text"></i>
-        </button>
-        <button onclick="openCart()" class="relative p-2 rounded-full hover:bg-orange-50 transition">
-          <i data-lucide="shopping-cart" class="w-5 h-5 text-text"></i>
-          <span id="cart-badge" class="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
-        </button>
-        <a href="#" onclick="navigateTo('orders')" class="hidden md:hidden p-2 rounded-full hover:bg-orange-50 transition">
-          <i data-lucide="clipboard-list" class="w-5 h-5 text-text"></i>
+      <!-- أيقونات وأزرار الجوال -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <a href="index.html" class="flex items-center gap-1 text-xs font-bold text-stone-700 bg-stone-100 hover:bg-orange-100 px-2.5 py-1.5 rounded-xl transition" title="بوابة اختيار الأدوار">
+          <span>الأدوار</span>
+          <span class="text-xs">🔄</span>
         </a>
+        <button onclick="focusSearch()" class="p-2 rounded-xl hover:bg-orange-50 transition text-stone-700">
+          <i data-lucide="search" class="w-5 h-5"></i>
+        </button>
+        <button onclick="openCart()" class="relative p-2 rounded-xl hover:bg-orange-50 transition text-stone-700">
+          <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+          <span id="cart-badge" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center hidden">0</span>
+        </button>
       </div>
     </div>
   </nav>
@@ -242,34 +250,42 @@
     <!-- 2. صفحة المطعم -->
     <!-- ======================================== -->
     <section id="page-restaurant" class="page-section hidden">
+      <!-- شريط الرجوع العلوي للموبايل وسطح المكتب -->
+      <div class="max-w-5xl mx-auto px-4 pt-3 pb-1">
+        <button onclick="navigateTo('home')" class="inline-flex items-center gap-2 text-stone-700 hover:text-primary font-bold text-xs sm:text-sm bg-white px-3.5 py-2 rounded-xl shadow-sm border border-stone-200 hover:border-primary transition">
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          <span>الرجوع إلى قائمة المطاعم</span>
+        </button>
+      </div>
+
       <!-- غطاء المطعم -->
-      <div id="restaurant-cover" class="relative h-56 md:h-72 overflow-hidden">
+      <div id="restaurant-cover" class="relative h-48 sm:h-56 md:h-72 overflow-hidden rounded-2xl mx-4 mt-2">
         <!-- يتم ملؤه بالجافاسكربت -->
       </div>
 
       <div class="max-w-5xl mx-auto px-4 -mt-6 relative z-10">
         <!-- بطاقة معلومات المطعم -->
-        <div id="restaurant-info-card" class="bg-white rounded-2xl shadow-md p-5 mb-6">
+        <div id="restaurant-info-card" class="bg-white rounded-2xl shadow-md p-4 sm:p-5 mb-6 border border-stone-100">
           <!-- يتم ملؤها بالجافاسكربت -->
         </div>
 
         <!-- التبويبات -->
-        <div class="flex border-b border-gray-200 mb-6">
-          <button onclick="switchTab('menu')" class="tab-btn active flex-1 py-3 text-center font-bold text-sm border-b-2 border-primary text-primary transition" data-tab="menu">المنيو</button>
-          <button onclick="switchTab('reviews')" class="tab-btn flex-1 py-3 text-center font-bold text-sm border-b-2 border-transparent text-gray-500 transition" data-tab="reviews">التقييمات</button>
-          <button onclick="switchTab('info')" class="tab-btn flex-1 py-3 text-center font-bold text-sm border-b-2 border-transparent text-gray-500 transition" data-tab="info">المعلومات</button>
+        <div class="flex border-b border-gray-200 mb-6 bg-white rounded-xl px-2 shadow-xs">
+          <button onclick="switchTab('menu')" class="tab-btn active flex-1 py-3 text-center font-bold text-xs sm:text-sm border-b-2 border-primary text-primary transition" data-tab="menu">المنيو</button>
+          <button onclick="switchTab('reviews')" class="tab-btn flex-1 py-3 text-center font-bold text-xs sm:text-sm border-b-2 border-transparent text-gray-500 transition" data-tab="reviews">التقييمات</button>
+          <button onclick="switchTab('info')" class="tab-btn flex-1 py-3 text-center font-bold text-xs sm:text-sm border-b-2 border-transparent text-gray-500 transition" data-tab="info">المعلومات</button>
         </div>
 
         <!-- محتوى تبويب المنيو -->
         <div id="tab-menu" class="tab-content">
           <!-- شرائح تصنيفات المنيو -->
           <div class="flex gap-2 mb-6 overflow-x-auto hide-scrollbar pb-2">
-            <button onclick="filterMenu('all')" class="menu-cat-chip category-chip active flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-primary text-white text-sm font-semibold transition" data-mcat="all">الكل</button>
-            <button onclick="filterMenu('bestseller')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="bestseller">🔥 الأكثر مبيعًا</button>
-            <button onclick="filterMenu('burger')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="burger">🍔 برجر</button>
-            <button onclick="filterMenu('sandwich')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="sandwich">🥙 ساندويتشات</button>
-            <button onclick="filterMenu('appetizer')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="appetizer">🧆 مقبلات</button>
-            <button onclick="filterMenu('drink')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-sm font-semibold transition" data-mcat="drink">🥤 مشروبات</button>
+            <button onclick="filterMenu('all')" class="menu-cat-chip category-chip active flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-primary text-white text-xs sm:text-sm font-semibold transition" data-mcat="all">الكل</button>
+            <button onclick="filterMenu('bestseller')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-xs sm:text-sm font-semibold transition" data-mcat="bestseller">🔥 الأكثر مبيعًا</button>
+            <button onclick="filterMenu('burger')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-xs sm:text-sm font-semibold transition" data-mcat="burger">🍔 برجر</button>
+            <button onclick="filterMenu('sandwich')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-xs sm:text-sm font-semibold transition" data-mcat="sandwich">🥙 ساندويتشات</button>
+            <button onclick="filterMenu('appetizer')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-xs sm:text-sm font-semibold transition" data-mcat="appetizer">🧆 مقبلات</button>
+            <button onclick="filterMenu('drink')" class="menu-cat-chip category-chip flex-shrink-0 px-4 py-2 rounded-full border-2 border-orange-200 bg-white text-xs sm:text-sm font-semibold transition" data-mcat="drink">🥤 مشروبات</button>
           </div>
           <!-- شبكة عناصر المنيو -->
           <div id="menu-items-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -286,16 +302,11 @@
 
         <!-- محتوى تبويب المعلومات -->
         <div id="tab-info" class="tab-content hidden">
-          <div id="restaurant-details" class="bg-white rounded-2xl shadow-sm p-6 mb-8">
+          <div id="restaurant-details" class="bg-white rounded-2xl shadow-sm p-5 sm:p-6 mb-8 border border-stone-100">
             <!-- يتم ملؤها بالجافاسكربت -->
           </div>
         </div>
       </div>
-
-      <!-- زر العودة -->
-      <button onclick="navigateTo('home')" class="fixed bottom-24 md:bottom-8 left-6 z-40 bg-white shadow-lg rounded-full p-3 hover:bg-orange-50 transition">
-        <i data-lucide="arrow-left" class="w-5 h-5 text-primary"></i>
-      </button>
     </section>
 
     <!-- ======================================== -->
@@ -437,33 +448,36 @@
   <!-- ============================================ -->
   <!-- 3. سلة التسوق (لوحة منزلقة) -->
   <!-- ============================================ -->
-  <div id="cart-overlay" class="cart-overlay fixed inset-0 bg-black/50 z-[60] hidden opacity-0" onclick="closeCart()"></div>
-  <div id="cart-panel" class="cart-panel fixed top-0 right-0 h-full w-full max-w-md bg-white z-[70] shadow-2xl transform translate-x-full flex flex-col">
+  <div id="cart-overlay" class="cart-overlay fixed inset-0 bg-black/50 z-[70] hidden opacity-0" onclick="closeCart()"></div>
+  <div id="cart-panel" class="cart-panel fixed top-0 bottom-0 right-0 h-full max-h-[100dvh] w-full max-w-md bg-white z-[80] shadow-2xl transform translate-x-full flex flex-col">
     <!-- رأس السلة -->
-    <div class="flex items-center justify-between p-5 border-b border-gray-100">
-      <h2 class="text-xl font-black">السلة</h2>
-      <button onclick="closeCart()" class="p-2 rounded-full hover:bg-gray-100 transition">
-        <i data-lucide="x" class="w-5 h-5"></i>
+    <div class="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100 flex-shrink-0">
+      <div class="flex items-center gap-2">
+        <span class="text-xl">🛒</span>
+        <h2 class="text-lg sm:text-xl font-black">سلة المشتريات</h2>
+      </div>
+      <button onclick="closeCart()" class="p-2 rounded-xl hover:bg-gray-100 transition text-gray-500">
+        <i data-lucide="x" class="w-6 h-6"></i>
       </button>
     </div>
 
     <!-- محتوى السلة -->
-    <div id="cart-content" class="flex-1 overflow-y-auto p-5">
+    <div id="cart-content" class="flex-1 overflow-y-auto p-4 sm:p-5">
       <!-- عناصر السلة - يتم ملؤها بالجافاسكربت -->
     </div>
 
     <!-- حالة السلة الفارغة -->
-    <div id="cart-empty" class="hidden flex-1 flex flex-col items-center justify-center p-5">
-      <div class="text-7xl mb-4">🛒</div>
-      <h3 class="text-xl font-bold mb-2">السلة فارغة</h3>
-      <p class="text-gray-500 mb-6 text-center">أضف بعض الوجبات اللذيذة من المطاعم</p>
-      <button onclick="closeCart(); navigateTo('home')" class="bg-primary hover:bg-primary-dark text-white font-bold px-8 py-3 rounded-xl transition">
+    <div id="cart-empty" class="hidden flex-1 flex flex-col items-center justify-center p-5 text-center">
+      <div class="text-6xl mb-3">🛒</div>
+      <h3 class="text-lg font-bold mb-1">السلة فارغة</h3>
+      <p class="text-gray-500 text-sm mb-5">أضف بعض الوجبات اللذيذة من المطاعم</p>
+      <button onclick="closeCart(); navigateTo('home')" class="bg-primary hover:bg-primary-dark text-white font-bold px-6 py-2.5 rounded-xl transition text-sm">
         تصفح المطاعم
       </button>
     </div>
 
     <!-- تذييل السلة -->
-    <div id="cart-footer" class="hidden border-t border-gray-100 p-5 space-y-3 bg-white">
+    <div id="cart-footer" class="hidden border-t border-gray-100 p-4 sm:p-5 pb-8 sm:pb-5 space-y-3 bg-white flex-shrink-0 shadow-lg">
       <div class="flex justify-between text-sm">
         <span class="text-gray-500">المجموع الفرعي</span>
         <span id="cart-subtotal" class="font-semibold">0 ر.س</span>
@@ -472,12 +486,12 @@
         <span class="text-gray-500">رسوم التوصيل</span>
         <span id="cart-delivery-fee" class="font-semibold">10 ر.س</span>
       </div>
-      <div class="flex justify-between font-bold text-lg border-t border-gray-100 pt-3">
+      <div class="flex justify-between font-bold text-base sm:text-lg border-t border-gray-100 pt-2">
         <span>الإجمالي</span>
-        <span id="cart-total" class="text-primary">0 ر.س</span>
+        <span id="cart-total" class="text-primary font-black">0 ر.س</span>
       </div>
-      <button onclick="closeCart(); navigateTo('checkout')" class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 rounded-xl transition text-sm">
-        إتمام الطلب
+      <button onclick="closeCart(); navigateTo('checkout')" class="w-full bg-primary hover:bg-primary-dark text-white font-extrabold py-3.5 rounded-xl transition text-sm shadow-md">
+        متابعة إتمام الطلب ←
       </button>
     </div>
   </div>
@@ -485,18 +499,18 @@
   <!-- ============================================ -->
   <!-- مودال نجاح الطلب -->
   <!-- ============================================ -->
-  <div id="success-modal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-black/50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform scale-95 transition-transform" id="success-modal-content">
-      <div class="text-6xl mb-4">🎉</div>
-      <h2 class="text-2xl font-black text-success mb-2">تم تأكيد طلبك!</h2>
-      <p class="text-gray-500 mb-2">رقم الطلب</p>
-      <p id="order-number-display" class="text-3xl font-black text-primary mb-4">#5678</p>
-      <p class="text-gray-500 text-sm mb-6">سيصلك طلبك خلال 30-45 دقيقة 🚗</p>
-      <div class="flex gap-3">
-        <button onclick="closeSuccessModal(); navigateTo('orders')" class="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition text-sm">
+  <div id="success-modal" class="fixed inset-0 z-[90] hidden items-center justify-center bg-black/50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 sm:p-8 text-center transform scale-95 transition-transform max-h-[90dvh] overflow-y-auto" id="success-modal-content">
+      <div class="text-5xl sm:text-6xl mb-3">🎉</div>
+      <h2 class="text-xl sm:text-2xl font-black text-success mb-2">تم تأكيد طلبك!</h2>
+      <p class="text-gray-500 text-xs sm:text-sm mb-1">رقم الطلب</p>
+      <p id="order-number-display" class="text-2xl sm:text-3xl font-black text-primary mb-3">#5678</p>
+      <p class="text-gray-500 text-xs sm:text-sm mb-5">سيصلك طلبك خلال 25-35 دقيقة 🛵</p>
+      <div class="flex gap-2 sm:gap-3">
+        <button onclick="closeSuccessModal(); navigateTo('orders')" class="flex-1 bg-primary hover:bg-primary-dark text-white font-bold py-3 rounded-xl transition text-xs sm:text-sm">
           تتبع الطلب
         </button>
-        <button onclick="closeSuccessModal(); navigateTo('home')" class="flex-1 border-2 border-primary text-primary font-bold py-3 rounded-xl transition text-sm hover:bg-orange-50">
+        <button onclick="closeSuccessModal(); navigateTo('home')" class="flex-1 border-2 border-primary text-primary font-bold py-3 rounded-xl transition text-xs sm:text-sm hover:bg-orange-50">
           الرئيسية
         </button>
       </div>
@@ -506,21 +520,25 @@
   <!-- ============================================ -->
   <!-- شريط التنقل السفلي (الجوال) -->
   <!-- ============================================ -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 shadow-lg">
-    <div class="flex justify-around items-center h-16">
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 shadow-lg">
+    <div class="flex justify-around items-center h-16 px-1">
       <button onclick="navigateTo('home')" class="bottom-nav-btn flex flex-col items-center gap-0.5 text-primary" data-page="home">
         <i data-lucide="home" class="w-5 h-5"></i>
-        <span class="text-xs font-semibold">الرئيسية</span>
+        <span class="text-[11px] font-bold">الرئيسية</span>
       </button>
       <button onclick="navigateTo('orders')" class="bottom-nav-btn flex flex-col items-center gap-0.5 text-gray-400" data-page="orders">
         <i data-lucide="clipboard-list" class="w-5 h-5"></i>
-        <span class="text-xs font-semibold">طلباتي</span>
+        <span class="text-[11px] font-bold">طلباتي</span>
       </button>
       <button onclick="openCart()" class="bottom-nav-btn relative flex flex-col items-center gap-0.5 text-gray-400" data-page="cart">
         <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-        <span class="text-xs font-semibold">السلة</span>
+        <span class="text-[11px] font-bold">السلة</span>
         <span id="cart-badge-bottom" class="absolute -top-1 right-2 bg-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
       </button>
+      <a href="index.html" class="flex flex-col items-center gap-0.5 text-stone-500 hover:text-primary">
+        <i data-lucide="layers" class="w-5 h-5"></i>
+        <span class="text-[11px] font-bold">الأدوار</span>
+      </a>
     </div>
   </nav>
 
@@ -945,18 +963,18 @@
 
         // تحديث بطاقة المعلومات
         document.getElementById('restaurant-info-card').innerHTML = `
-          <div class="flex items-start justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
-              <h1 class="text-2xl font-black mb-1">${currentRestaurant.name}</h1>
-              <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">${currentRestaurant.type}</span>
+              <h1 class="text-xl sm:text-2xl font-black mb-1">${currentRestaurant.name}</h1>
+              <span class="text-xs sm:text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-semibold">${currentRestaurant.type}</span>
             </div>
-            <div class="flex items-center gap-1 bg-orange-50 px-3 py-1.5 rounded-xl font-bold">
+            <div class="inline-flex self-start sm:self-auto items-center gap-1.5 bg-orange-50 px-3 py-1.5 rounded-xl font-bold text-sm">
               <span>⭐</span>
-              <span>${currentRestaurant.rating}</span>
-              <span class="text-gray-400 text-sm font-normal">(${currentRestaurant.ratingCount})</span>
+              <span class="text-dark">${currentRestaurant.rating}</span>
+              <span class="text-gray-400 text-xs font-normal">(${currentRestaurant.ratingCount} تقييم)</span>
             </div>
           </div>
-          <div class="flex items-center gap-6 mt-4 text-sm text-gray-500">
+          <div class="flex flex-wrap items-center gap-4 sm:gap-6 mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 pt-3 border-t border-gray-100">
             <span class="flex items-center gap-1.5"><i data-lucide="clock" class="w-4 h-4 text-primary"></i> ${currentRestaurant.deliveryTime} دقيقة</span>
             <span class="flex items-center gap-1.5"><i data-lucide="truck" class="w-4 h-4 text-primary"></i> ${currentRestaurant.deliveryFee === 0 ? '<span class="text-success font-semibold">توصيل مجاني</span>' : currentRestaurant.deliveryFee + ' ر.س توصيل'}</span>
           </div>
@@ -1217,6 +1235,7 @@
       const overlay = document.getElementById('cart-overlay');
       const panel = document.getElementById('cart-panel');
       overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
       requestAnimationFrame(() => {
         overlay.style.opacity = '1';
         panel.style.transform = 'translateX(0)';
@@ -1228,6 +1247,7 @@
       const panel = document.getElementById('cart-panel');
       overlay.style.opacity = '0';
       panel.style.transform = 'translateX(100%)';
+      document.body.style.overflow = '';
       setTimeout(() => overlay.classList.add('hidden'), 300);
     }
 
