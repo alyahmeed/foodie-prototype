@@ -37,14 +37,20 @@
     }
     .floating-emoji {
       position: absolute;
-      font-size: 32px;
-      opacity: 0.12;
-      animation: float 22s infinite linear;
+      bottom: -60px;
+      font-size: 28px;
+      opacity: 0.08;
+      animation: float 24s infinite linear;
       will-change: transform;
     }
     @keyframes float {
-      0% { transform: translateY(105vh) rotate(0deg); }
-      100% { transform: translateY(-120px) rotate(360deg); }
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-115vh) rotate(360deg); }
+    }
+    @media (max-width: 768px) {
+      .floating-bg {
+        display: none !important;
+      }
     }
 
     .container {
@@ -279,20 +285,22 @@
   </div>
 
   <script>
-    // Create floating food emojis
-    const emojis = ['🍔','🍕','🍣','🍰','🥗','🌮','🍗','🧆','🍟','🥤','🍩'];
-    const bg = document.getElementById('floatingBg');
-    const count = window.innerWidth < 768 ? 10 : 16;
-    
-    for (let i = 0; i < count; i++) {
-      const span = document.createElement('span');
-      span.className = 'floating-emoji';
-      span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      span.style.left = (Math.random() * 95) + '%';
-      span.style.animationDelay = (Math.random() * 18) + 's';
-      span.style.animationDuration = (16 + Math.random() * 14) + 's';
-      span.style.fontSize = (22 + Math.random() * 18) + 'px';
-      bg.appendChild(span);
+    // Create floating food emojis only for desktop to keep mobile screen clean and clear
+    if (window.innerWidth >= 768) {
+      const emojis = ['🍔','🍕','🍣','🍰','🥗','🌮','🍗','🧆','🍟','🥤','🍩'];
+      const bg = document.getElementById('floatingBg');
+      if (bg) {
+        for (let i = 0; i < 14; i++) {
+          const span = document.createElement('span');
+          span.className = 'floating-emoji';
+          span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          span.style.left = (Math.random() * 92) + '%';
+          span.style.animationDelay = `-${Math.random() * 24}s`;
+          span.style.animationDuration = (18 + Math.random() * 12) + 's';
+          span.style.fontSize = (20 + Math.random() * 16) + 'px';
+          bg.appendChild(span);
+        }
+      }
     }
   </script>
 </body>
